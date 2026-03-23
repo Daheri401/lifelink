@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donor Login - LifeLink</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="auth-page">
+  <div class="page-banner" style="--page-banner:url('../New%20folder/auth-banner.jpg');">
+    <h2>Welcome Back, Donor</h2>
+  </div>
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/home" class="logo">
+          <img src="../New%20folder/logo.png" alt="LifeLink logo" class="logo-img">
+          <span class="logo-text">LifeLink</span>
+        </a>
+        <nav class="nav">
+          <a href="/donor-login" class="nav-link">Back to Home</a>
+          <button id="theme-toggle" title="Toggle dark/light theme">🌙</button>
+        </nav>
+        <button class="burger-menu" aria-label="Toggle menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div class="container container-sm py-5">
+    <div class="card">
+      <div class="card-header text-center">
+        <h2>Donor Login</h2>
+        <p class="text-muted">Access your account to donate blood</p>
+      </div>
+
+      <div class="card-body">
+        <form id="donor-login-form">
+          <div class="form-group">
+            <label class="form-label" for="login-identifier">Phone Number or Email</label>
+            <input type="text" id="login-identifier" class="form-input" placeholder="+237 6XX XXX XXX or email" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <input type="password" id="password" class="form-input" required>
+          </div>
+
+          <div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="form-check">
+              <input type="checkbox" id="remember-me" class="form-check-input">
+              <label class="form-check-label" for="remember-me">Remember me</label>
+            </div>
+            <a href="#" class="text-link">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-large mb-3">Login</button>
+
+          <p class="text-center text-muted">
+            Don't have an account? 
+            <a href="/donor-signup">Sign up here</a>
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom text-center">
+        <p>&copy; 2026 LifeLink. All rights reserved. | Connecting Lives Through Blood 🩸</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>

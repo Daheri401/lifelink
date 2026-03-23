@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="LifeLink - Secure digital blood donation platform connecting verified hospitals and voluntary donors in Cameroon and low-resource environments.">
+  <title>LifeLink - Connecting Lives Through Blood</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- HEADER & NAVIGATION -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/home" class="logo">
+          <img src="images/logo.png" alt="LifeLink logo" class="logo-img">
+          <span class="logo-text">LifeLink</span>
+        </a>
+        <nav class="nav">
+          <a href="#how-it-works" class="nav-link">How It Works</a>
+          <a href="#features" class="nav-link">Features</a>
+          <a href="#trust" class="nav-link">Trust & Safety</a>
+          <button id="theme-toggle" title="Toggle dark/light theme">🌙</button>
+          <div class="nav-button">
+            <a href="/login" class="btn btn-secondary btn-small">Login</a>
+          </div>
+        </nav>
+        <button class="burger-menu" aria-label="Toggle menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="hero" style="--hero-image: url('images/hero.jpg');">
+    <div class="container">
+      <div class="hero-logo">
+        <img src="images/logo.png" alt="LifeLink logo" style="height: 80px; margin-bottom: 20px;">
+      </div>
+      <h1>LifeLink</h1>
+      <p class="hero-tagline">Connecting Lives Through Blood Donation</p>
+      <p class="hero-description">A secure digital platform connecting hospitals with voluntary blood donors to solve delayed access to blood during medical emergencies in Cameroon.</p>
+      <div class="hero-buttons">
+        <a href="/donor-signup" class="btn btn-primary btn-large">
+          Register as Donor
+        </a>
+        <a href="/hospital-signup" class="btn btn-outline btn-large">
+          Register as Hospital
+        </a>
+        <a href="/login" class="btn btn-secondary btn-large">
+          Login
+        </a>
+      </div>
+      <!-- Optional decorative illustration (place your image in 'images' folder) -->
+      <img src="images/hero-illustration.png" alt="LifeLink illustration" class="hero-illustration">
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works" class="py-5">
+    <div class="container">
+      <h2 class="text-center mb-5">How LifeLink Works</h2>
+      
+      <div class="row">
+        <!-- Donor Path -->
+        <div class="col col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h3>For Donors 🩸</h3>
+            </div>
+            <div class="card-body">
+              <ol style="padding-left: 20px; color: var(--color-gray-dark); line-height: 2;">
+                <li><strong>Sign Up</strong> - Create account with your phone/email</li>
+                <li><strong>Verify</strong> - Receive OTP verification code</li>
+                <li><strong>Complete Profile</strong> - Add blood type and health info</li>
+                <li><strong>Browse Requests</strong> - View nearby blood requests</li>
+                <li><strong>Accept Request</strong> - Help save a life in your community</li>
+                <li><strong>Track History</strong> - Keep records of all donations</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hospital Path -->
+        <div class="col col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h3>For Hospitals 🏥</h3>
+            </div>
+            <div class="card-body">
+              <ol style="padding-left: 20px; color: var(--color-gray-dark); line-height: 2;">
+                <li><strong>Register</strong> - Submit hospital credentials</li>
+                <li><strong>Get Verified</strong> - Pass verification within 24 hours</li>
+                <li><strong>Post Requests</strong> - Create urgent blood requests</li>
+                <li><strong>Track Responses</strong> - Receive real-time donor responses</li>
+                <li><strong>Manage Donors</strong> - Communicate with verified donors</li>
+                <li><strong>Save Records</strong> - Maintain secure transaction history</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" class="py-5" style="background-color: var(--color-soft-gray);">
+    <div class="container">
+      <h2 class="text-center mb-5">Key Features</h2>
+      
+      <div class="stats-grid">
+        <div class="stat-item">
+          <img src="images/security.png" alt="Security" class="stat-icon">
+          <div class="stat-label">
+            <h4 style="margin-bottom: 8px;">Bank-Level Security</h4>
+            <p style="font-size: 14px; margin-bottom: 0;">Encrypted data with end-to-end privacy protection</p>
+          </div>
+        </div>
+        
+        <div class="stat-item">
+          <img src="images/offline.png" alt="Offline" class="stat-icon">
+          <div class="stat-label">
+            <h4 style="margin-bottom: 8px;">Works Offline-First</h4>
+            <p style="font-size: 14px; margin-bottom: 0;">Designed for 2G/3G networks and low bandwidth</p>
+          </div>
+        </div>
+        
+        <div class="stat-item">
+          <img src="images/fast.png" alt="Fast" class="stat-icon">
+          <div class="stat-label">
+            <h4 style="margin-bottom: 8px;">Fast & Simple</h4>
+            <p style="font-size: 14px; margin-bottom: 0;">Minimal steps from signup to saving lives</p>
+          </div>
+        </div>
+        
+        <div class="stat-item">
+          <img src="images/verified.png" alt="Verified" class="stat-icon">
+          <div class="stat-label">
+            <h4 style="margin-bottom: 8px;">Verified Only</h4>
+            <p style="font-size: 14px; margin-bottom: 0;">All hospitals and donors are verified for safety</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Cards -->
+      <div class="row mt-5">
+        <div class="col col-md-6">
+          <div class="card">
+            <h4 class="mb-3">📱 Mobile-First Design</h4>
+            <p>Optimized for smartphones and low-end devices. Clean, intuitive interface works seamlessly on small screens.</p>
+          </div>
+        </div>
+        
+        <div class="col col-md-6">
+          <div class="card">
+            <h4 class="mb-3">📍 Location-Smart</h4>
+            <p>Find nearby requests in real-time. Donors can see critical requests in their area instantly.</p>
+          </div>
+        </div>
+        
+        <div class="col col-md-6">
+          <div class="card">
+            <h4 class="mb-3">🔑 Secure Login</h4>
+            <p>OTP verification ensures only authorized users access the platform. Phone-based authentication.</p>
+          </div>
+        </div>
+        
+        <div class="col col-md-6">
+          <div class="card">
+            <h4 class="mb-3">📊 Real-Time Tracking</h4>
+            <p>Track blood requests from posting to fulfillment. Hospitals know exactly where help is coming from.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST & SAFETY -->
+  <section id="trust" class="py-5">
+    <div class="container">
+      <h2 class="text-center mb-5">Trust & Safety</h2>
+      
+      <div class="card" style="max-width: 800px; margin: 0 auto;">
+        <div class="card-header">
+          <h3>Your Safety is Our Priority</h3>
+        </div>
+        <div class="card-body">
+          <div class="mb-4">
+            <h4 class="text-success">🏥 Hospital Verification</h4>
+            <p>Every hospital is manually verified with official registration documents. We confirm licenses and credentials.</p>
+          </div>
+          
+          <div class="mb-4">
+            <h4 class="text-success">🔐 Encrypted Data</h4>
+            <p>Your personal information is never shared publicly. All donor data is encrypted and protected under strict privacy laws.</p>
+          </div>
+          
+          <div class="mb-4">
+            <h4 class="text-success">✅ Donor Screening</h4>
+            <p>Donors complete health questionnaires. Hospitals can verify donor eligibility before accepting donations.</p>
+          </div>
+          
+          <div class="mb-4">
+            <h4 class="text-success">🛡️ Privacy First</h4>
+            <p>Hospitals never get your home address. Direct contact is only after you accept a specific request.</p>
+          </div>
+          
+          <div class="mb-4">
+            <h4 class="text-success">📞 Support 24/7</h4>
+            <p>Questions or concerns? Contact our support team anytime for assistance or to report issues.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOCIAL PROOF / STATS -->
+  <section class="py-5" style="background-color: var(--color-soft-gray);">
+    <div class="container">
+      <h2 class="text-center mb-5">Platform Impact</h2>
+      
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value" id="stat-donors">2,400+</div>
+          <div class="stat-label">Registered Donors</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value" id="stat-hospitals">180+</div>
+          <div class="stat-label">Hospitals Using Platform</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value" id="stat-requests">12,000+</div>
+          <div class="stat-label">Blood Requests Fulfilled</div>
+        </div>
+        
+        <div class="stat-item">
+          <div class="stat-value">24/7</div>
+          <div class="stat-label">Available Service</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA SECTION -->
+  <section class="py-5">
+    <div class="container text-center">
+      <h2 class="mb-3">Ready to Save Lives?</h2>
+      <p class="mb-4" style="font-size: 18px; max-width: 600px; margin-left: auto; margin-right: auto;">Join thousands of donors and hospitals already using LifeLink to connect, donate, and save lives.</p>
+      
+      <div class="hero-buttons">
+        <a href="/register-otp" class="btn btn-primary btn-large">
+          Start Donating Today
+        </a>
+        <a href="/register-otp" class="btn btn-secondary btn-large">
+          Register Hospital
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>About LifeLink</h4>
+          <div class="footer-links">
+            <a href="#mission">Our Mission</a>
+            <a href="#impact">Impact</a>
+            <a href="#team">Team</a>
+            <a href="#careers">Careers</a>
+          </div>
+        </div>
+        
+        <div class="footer-section">
+          <h4>For Donors</h4>
+          <div class="footer-links">
+            <a href="pages/donor-faq.html">FAQ</a>
+            <a href="pages/donate-guide.html">Donation Guide</a>
+            <a href="pages/health-info.html">Health Info</a>
+            <a href="pages/blood-types.html">Blood Types</a>
+          </div>
+        </div>
+        
+        <div class="footer-section">
+          <h4>For Hospitals</h4>
+          <div class="footer-links">
+            <a href="pages/hospital-guide.html">Getting Started</a>
+            <a href="pages/api-docs.html">API Documentation</a>
+            <a href="pages/support.html">Support</a>
+            <a href="pages/contact.html">Contact</a>
+          </div>
+        </div>
+        
+        <div class="footer-section">
+          <h4>Legal</h4>
+          <div class="footer-links">
+            <a href="pages/privacy.html">Privacy Policy</a>
+            <a href="pages/terms.html">Terms of Service</a>
+            <a href="pages/security.html">Security</a>
+            <a href="pages/gdpr.html">GDPR Compliance</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <p>&copy; 2025 LifeLink. All rights reserved. | Connecting Lives Through Blood 🩸</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/script.js"></script>
+  <script>
+    async function loadStats() {
+      try {
+        const response = await fetch('/api/stats');
+        const stats = await response.json();
+        document.getElementById('stat-donors').textContent = stats.donors + '+';
+        document.getElementById('stat-hospitals').textContent = stats.hospitals + '+';
+        document.getElementById('stat-requests').textContent = stats.requestsThisMonth + '+';
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+    loadStats();
+  </script>
+</body>
+</html>

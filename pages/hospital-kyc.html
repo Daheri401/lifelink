@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital KYC Verification - LifeLink</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="auth-page">
+  <div class="page-banner" style="--page-banner:url('../New%20folder/auth-banner.jpg');">
+    <h2>Hospital Verification</h2>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="../index.html" class="logo">
+          <img src="../New%20folder/logo.png" alt="LifeLink logo" class="logo-img">
+          <span class="logo-text">LifeLink</span>
+        </a>
+        <nav class="nav">
+          <a href="hospital-dashboard.html" class="nav-link">Back to Dashboard</a>
+        </nav>
+        <button class="burger-menu" aria-label="Toggle menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div class="container container-sm py-5">
+    <div class="card">
+      <div class="card-header text-center">
+        <h2>Complete Hospital Verification</h2>
+        <p class="text-muted">Submit your credentials for approval to post blood requests</p>
+      </div>
+
+      <div class="card-body">
+        <div class="alert alert-info mb-4">
+          <span class="alert-icon">ℹ️</span>
+          <div class="alert-content">
+            <p><strong>Verification Process:</strong> Your documents will be reviewed within 24-48 hours. Only verified hospitals can post blood requests and access donor information.</p>
+          </div>
+        </div>
+
+        <form id="hospital-kyc-form">
+          <!-- License Information -->
+          <fieldset>
+            <legend style="font-size: 16px; font-weight: 600; margin-bottom: 16px; display: block;">License & Registration Details</legend>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="license-number">Medical License Number</label>
+                <input type="text" id="license-number" class="form-input" placeholder="LICENSE-2024-001" required>
+                <p class="form-hint">Official medical license number</p>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="registration-number">Registration Number</label>
+                <input type="text" id="registration-number" class="form-input" placeholder="REG-2024-001" required>
+                <p class="form-hint">Government health registration</p>
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="registration-date">Registration Date</label>
+                <input type="date" id="registration-date" class="form-input" required>
+                <p class="form-hint">When your hospital was registered</p>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="issuing-authority">Issuing Authority</label>
+                <input type="text" id="issuing-authority" class="form-input" placeholder="Ministry of Health" required>
+                <p class="form-hint">Government body that issued the license</p>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Contact & Address -->
+          <fieldset style="margin-top: 24px;">
+            <legend style="font-size: 16px; font-weight: 600; margin-bottom: 16px; display: block;">Contact & Address Information</legend>
+
+            <div class="form-group">
+              <label class="form-label" for="contact-person">Contact Person</label>
+              <input type="text" id="contact-person" class="form-input" placeholder="Dr. Jane Smith" required>
+              <p class="form-hint">Primary contact for blood bank operations</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="hospital-address">Complete Hospital Address</label>
+              <textarea id="hospital-address" class="form-input" rows="3" placeholder="123 Main Street, City Center, Yaoundé, Cameroon" required></textarea>
+              <p class="form-hint">Full address including city and country</p>
+            </div>
+          </fieldset>
+
+          <!-- Document Upload -->
+          <fieldset style="margin-top: 24px;">
+            <legend style="font-size: 16px; font-weight: 600; margin-bottom: 16px; display: block;">Document Upload</legend>
+
+            <div class="alert alert-warning mb-4">
+              <span class="alert-icon">⚠️</span>
+              <div class="alert-content">
+                <p><strong>Accepted Formats:</strong> PDF, JPG, PNG (Max 5MB each)</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="license-document">Medical License Document</label>
+              <input type="file" id="license-document" class="form-input" accept=".pdf,.jpg,.jpeg,.png" required>
+              <p class="form-hint">Upload your official medical license certificate</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="registration-certificate">Registration Certificate</label>
+              <input type="file" id="registration-certificate" class="form-input" accept=".pdf,.jpg,.jpeg,.png" required>
+              <p class="form-hint">Government registration certificate</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="blood-bank-certification">Blood Bank Certification (Optional)</label>
+              <input type="file" id="blood-bank-certification" class="form-input" accept=".pdf,.jpg,.jpeg,.png">
+              <p class="form-hint">Certification for blood bank operations</p>
+            </div>
+          </fieldset>
+
+          <!-- Terms & Submit -->
+          <fieldset style="margin-top: 24px;">
+            <legend style="font-size: 16px; font-weight: 600; margin-bottom: 16px; display: block;">Terms & Submission</legend>
+
+            <div class="form-check">
+              <input type="checkbox" id="accuracy-confirmation" class="form-check-input" required>
+              <label class="form-check-label" for="accuracy-confirmation">
+                I confirm that all information provided is accurate and up-to-date
+              </label>
+            </div>
+
+            <div class="form-check">
+              <input type="checkbox" id="compliance-agreement" class="form-check-input" required>
+              <label class="form-check-label" for="compliance-agreement">
+                Our hospital complies with national blood safety and donor protection standards
+              </label>
+            </div>
+          </fieldset>
+
+          <!-- Submit -->
+          <button type="submit" class="btn btn-primary btn-large mb-3">Submit for Verification</button>
+
+          <p class="text-center text-muted">
+            <a href="hospital-dashboard.html">Back to Dashboard</a>
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom text-center">
+        <p>&copy; 2025 LifeLink. All rights reserved. | Connecting Lives Through Blood 🩸</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>

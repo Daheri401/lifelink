@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - LifeLink</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="dashboard">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="../index.html" class="logo">
+          <img src="../New%20folder/logo.png" alt="LifeLink logo" class="logo-img">
+          <span class="logo-text">LifeLink</span>
+        </a>
+        <nav class="nav">
+          <a href="#" class="nav-link active">Dashboard</a>
+          <div class="nav-button">
+            <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+          </div>
+        </nav>
+        <button class="burger-menu" aria-label="Toggle menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN DASHBOARD -->
+  <div class="container">
+    <div class="dashboard">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-title">Admin Panel</div>
+        <div class="sidebar-menu">
+          <a href="#" class="sidebar-link active">
+            <span class="sidebar-link-icon">📊</span>
+            <span>Dashboard</span>
+          </a>
+          <a href="#" class="sidebar-link">
+            <span class="sidebar-link-icon">🏥</span>
+            <span>Hospital Verification</span>
+          </a>
+          <a href="#" class="sidebar-link">
+            <span class="sidebar-link-icon">👥</span>
+            <span>Manage Donors</span>
+          </a>
+          <a href="#" class="sidebar-link">
+            <span class="sidebar-link-icon">🩸</span>
+            <span>Blood Requests</span>
+          </a>
+        </div>
+        <div class="sidebar-logout">
+          <button class="btn btn-secondary btn-block" onclick="logout()">Logout</button>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="main-content">
+        <h2>Admin Dashboard</h2>
+
+        <!-- STATS -->
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="total-donors">0</div>
+            <div class="stat-label">Total Donors</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="total-hospitals">0</div>
+            <div class="stat-label">Verified Hospitals</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="requests-month">0</div>
+            <div class="stat-label">Requests This Month</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="successful-donations">0</div>
+            <div class="stat-label">Successful Donations</div>
+          </div>
+        </div>
+
+        <!-- HOSPITAL VERIFICATION -->
+        <div class="card">
+          <div class="card-header">
+            <h3>🏥 Hospital Verification</h3>
+          </div>
+          <div class="card-body">
+            <div id="hospital-verification-list">
+              <!-- Hospitals pending verification will be loaded here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- RECENT ACTIVITY -->
+        <div class="card">
+          <div class="card-header">
+            <h3>📋 Recent Blood Requests</h3>
+          </div>
+          <div class="card-body">
+            <div id="recent-requests">
+              <!-- Recent requests will be loaded here -->
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/js/script.js"></script>
+  <script>
+    async function loadStats() {
+      try {
+        const response = await fetch('/api/stats');
+        const stats = await response.json();
+
+        document.getElementById('total-donors').textContent = stats.donors;
+        document.getElementById('total-hospitals').textContent = stats.hospitals;
+        document.getElementById('requests-month').textContent = stats.requestsThisMonth;
+        document.getElementById('successful-donations').textContent = stats.successfulDonations;
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    async function loadHospitalVerifications() {
+      try {
+        const response = await fetch('/api/admin/hospitals');
+        const hospitals = await response.json();
+
+        const list = document.getElementById('hospital-verification-list');
+        if (hospitals.length === 0) {
+          list.innerHTML = '<p class="text-muted">No hospitals pending verification</p>';
+          return;
+        }
+
+        list.innerHTML = hospitals.map(hospital => `
+          <div class="card mb-3">
+            <div class="card-body">
+              <h4>${hospital.hospital_name}</h4>
+              <p class="text-muted mb-2">📍 ${hospital.location}</p>
+              <p class="text-muted mb-3">📧 ${hospital.email} | 📞 ${hospital.phone}</p>
+              <div class="d-flex gap-2">
+                <button class="btn btn-success btn-small" onclick="verifyHospital(${hospital.hospital_id}, 'verified')">Verify</button>
+                <button class="btn btn-danger btn-small" onclick="verifyHospital(${hospital.hospital_id}, 'rejected')">Reject</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading hospitals:', error);
+      }
+    }
+
+    async function verifyHospital(hospitalId, status) {
+      try {
+        const response = await fetch(`/api/admin/hospitals/${hospitalId}/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          alert(`Hospital ${status} successfully!`);
+          loadHospitalVerifications();
+        } else {
+          alert('Error: ' + result.message);
+        }
+      } catch (error) {
+        alert('Error updating hospital status');
+      }
+    }
+
+    async function loadRecentRequests() {
+      try {
+        const response = await fetch('/api/requests');
+        const requests = await response.json();
+
+        const recent = requests.slice(0, 5);
+        const list = document.getElementById('recent-requests');
+
+        if (recent.length === 0) {
+          list.innerHTML = '<p class="text-muted">No recent requests</p>';
+          return;
+        }
+
+        list.innerHTML = recent.map(request => `
+          <div class="request-card ${request.urgency_level} mb-3">
+            <div class="request-card-top">
+              <div>
+                <div class="request-blood-type">${request.blood_type}</div>
+                <p style="margin: 0; color: var(--color-gray-dark); font-size: 14px;">${request.units_needed} units needed</p>
+              </div>
+              <span class="request-badge badge-${request.urgency_level}">${request.urgency_level.toUpperCase()}</span>
+            </div>
+            <h4 style="margin-bottom: 8px;">${request.hospital_name}</h4>
+            <p style="margin: 0; color: var(--color-gray-medium); font-size: 13px;">📍 ${request.location}</p>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading requests:', error);
+      }
+    }
+
+    // Load all data on page load
+    loadStats();
+    loadHospitalVerifications();
+    loadRecentRequests();
+  </script>
+</body>
+</html>

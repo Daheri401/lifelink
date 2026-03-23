@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - LifeLink</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="auth-page">
+  <div class="page-banner" style="--page-banner:url('../New%20folder/auth-banner.jpg');">
+    <h2>Welcome Back</h2>
+  </div>
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/home" class="logo">
+          <img src="../New%20folder/logo.png" alt="LifeLink logo" class="logo-img">
+          <span class="logo-text">LifeLink</span>
+        </a>
+        <nav class="nav">
+          <a href="/home" class="nav-link">Back to Home</a>
+        </nav>
+        <button class="burger-menu" aria-label="Toggle menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div class="container container-sm py-5">
+    <div class="card">
+      <div class="card-header text-center">
+        <h2>Choose Your Account Type</h2>
+        <p class="text-muted">Select how you'd like to login</p>
+      </div>
+
+      <div class="card-body">
+        <div class="text-center">
+          <a href="/donor-login" class="btn btn-primary btn-large mb-3" style="width: 100%; max-width: 300px;">
+            Donor Login
+          </a>
+          <p class="text-muted mb-4">Access your donor account</p>
+
+          <a href="/hospital-login" class="btn btn-outline btn-large" style="width: 100%; max-width: 300px;">
+            Hospital Login
+          </a>
+          <p class="text-muted">Access your hospital dashboard</p>
+        </div>
+
+        <hr class="my-4">
+
+        <p class="text-center text-muted">
+          Don't have an account? 
+          <a href="/donor-signup">Register as Donor</a> or 
+          <a href="/hospital-signup">Register as Hospital</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom text-center">
+        <p>&copy; 2026 LifeLink. All rights reserved. | Connecting Lives Through Blood 🩸</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>

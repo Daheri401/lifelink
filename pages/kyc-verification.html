@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KYC Verification - LifeLink</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="dashboard" data-user-role="donor">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/home" class="logo">
+          <img src="../New%20folder/logo.png" alt="LifeLink logo" class="logo-img">
+          <span class="logo-text">LifeLink</span>
+        </a>
+        <nav class="nav">
+          <a href="donor-dashboard.html" class="nav-link">Dashboard</a>
+          <a href="#" class="nav-link active">KYC Verification</a>
+          <div class="nav-button">
+            <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+          </div>
+        </nav>
+        <button class="burger-menu" aria-label="Toggle menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div class="container py-5">
+    <div class="row">
+      <div class="col col-md-8">
+        <div class="card">
+          <div class="card-header">
+            <h2>KYC Verification</h2>
+            <p class="text-muted">Complete your identity verification to start accepting blood requests</p>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info mb-4">
+              <span class="alert-icon">ℹ️</span>
+              <div class="alert-content">
+                <p><strong>Why KYC Verification?</strong> This ensures donor authenticity and maintains trust in our blood donation network. Your documents are securely encrypted and only reviewed by our admin team.</p>
+              </div>
+            </div>
+
+            <form id="kyc-form">
+              <!-- National ID Upload -->
+              <div class="form-group">
+                <label class="form-label">National ID Card</label>
+                <div class="file-upload-area" id="id-upload-area">
+                  <div class="upload-content">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                    <p>Click to upload your National ID card</p>
+                    <p class="text-muted" style="font-size: 14px;">PNG, JPG, PDF up to 5MB</p>
+                  </div>
+                  <input type="file" id="national-id" accept=".png,.jpg,.jpeg,.pdf" required style="display: none;">
+                </div>
+                <div id="id-preview" class="file-preview" style="display: none;"></div>
+              </div>
+
+              <!-- Blood Group Document -->
+              <div class="form-group">
+                <label class="form-label">Blood Group Confirmation Document</label>
+                <div class="file-upload-area" id="blood-doc-upload-area">
+                  <div class="upload-content">
+                    <div style="font-size: 48px; margin-bottom: 16px;">🩸</div>
+                    <p>Click to upload blood group confirmation</p>
+                    <p class="text-muted" style="font-size: 14px;">Medical certificate, lab report, or previous donation card</p>
+                  </div>
+                  <input type="file" id="blood-document" accept=".png,.jpg,.jpeg,.pdf" required style="display: none;">
+                </div>
+                <div id="blood-doc-preview" class="file-preview" style="display: none;"></div>
+              </div>
+
+              <!-- Terms Agreement -->
+              <div class="form-check mb-4">
+                <input type="checkbox" id="kyc-consent" class="form-check-input" required>
+                <label class="form-check-label" for="kyc-consent">
+                  I consent to the verification of my identity documents for blood donation purposes. I understand that my information will be kept confidential and secure.
+                </label>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-large">Submit for Verification</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col col-md-4">
+        <div class="card">
+          <div class="card-header">
+            <h3>Verification Process</h3>
+          </div>
+          <div class="card-body">
+            <div class="verification-steps">
+              <div class="step completed">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                  <h4>Account Created</h4>
+                  <p>Basic registration completed</p>
+                </div>
+              </div>
+              <div class="step active">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                  <h4>KYC Verification</h4>
+                  <p>Upload required documents</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                  <h4>Admin Review</h4>
+                  <p>Documents reviewed by admin</p>
+                </div>
+              </div>
+              <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-content">
+                  <h4>Account Verified</h4>
+                  <p>Start accepting requests</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
+          <div class="card-header">
+            <h3>Requirements</h3>
+          </div>
+          <div class="card-body">
+            <ul style="padding-left: 20px; color: var(--color-gray-dark); line-height: 1.8;">
+              <li>Valid National ID card</li>
+              <li>Blood group confirmation document</li>
+              <li>Documents must be clear and readable</li>
+              <li>Maximum file size: 5MB each</li>
+              <li>Supported formats: PNG, JPG, PDF</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom text-center">
+        <p>&copy; 2025 LifeLink. All rights reserved. | Connecting Lives Through Blood 🩸</p>
+      </div>
+    </div>
+  </footer>
+
+  <style>
+    .file-upload-area {
+      border: 2px dashed var(--color-gray-light);
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: var(--color-soft-gray);
+    }
+
+    .file-upload-area:hover {
+      border-color: var(--color-deep-red);
+      background: rgba(183, 28, 28, 0.05);
+    }
+
+    .file-preview {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--color-soft-gray);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .file-preview img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    .verification-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      opacity: 0.5;
+    }
+
+    .step.active {
+      opacity: 1;
+    }
+
+    .step.completed {
+      opacity: 0.8;
+    }
+
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--color-gray-light);
+      color: var(--color-gray-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .step.active .step-number {
+      background: var(--color-deep-red);
+      color: white;
+    }
+
+    .step.completed .step-number {
+      background: var(--color-light-green);
+      color: white;
+    }
+
+    .step-content h4 {
+      margin: 0 0 4px 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .step-content p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--color-gray-medium);
+    }
+  </style>
+
+  <script src="../js/script.js"></script>
+  <script>
+    // File upload handling
+    function setupFileUpload(uploadAreaId, inputId, previewId) {
+      const uploadArea = document.getElementById(uploadAreaId);
+      const fileInput = document.getElementById(inputId);
+      const preview = document.getElementById(previewId);
+
+      uploadArea.addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          // Show preview
+          if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              preview.innerHTML = `
+                <img src="${e.target.result}" alt="Document preview">
+                <div>
+                  <strong>${file.name}</strong><br>
+                  <span style="color: var(--color-gray-medium); font-size: 14px;">${(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                </div>
+              `;
+              preview.style.display = 'flex';
+            };
+            reader.readAsDataURL(file);
+          } else {
+            preview.innerHTML = `
+              <div style="font-size: 24px;">📄</div>
+              <div>
+                <strong>${file.name}</strong><br>
+                <span style="color: var(--color-gray-medium); font-size: 14px;">${(file.size / 1024 / 1024).toFixed(2)} MB</span>
+              </div>
+            `;
+            preview.style.display = 'flex';
+          }
+
+          // Update upload area
+          uploadArea.querySelector('.upload-content').innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+            <p>File uploaded successfully</p>
+            <p class="text-muted" style="font-size: 14px;">Click to change file</p>
+          `;
+        }
+      });
+    }
+
+    // Setup file uploads
+    setupFileUpload('id-upload-area', 'national-id', 'id-preview');
+    setupFileUpload('blood-doc-upload-area', 'blood-document', 'blood-doc-preview');
+
+    // Form submission
+    document.getElementById('kyc-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData();
+      const nationalId = document.getElementById('national-id').files[0];
+      const bloodDocument = document.getElementById('blood-document').files[0];
+
+      if (!nationalId || !bloodDocument) {
+        showErrorNotification('Please upload both required documents');
+        return;
+      }
+
+      formData.append('national_id', nationalId);
+      formData.append('blood_document', bloodDocument);
+
+      try {
+        const response = await fetch('/api/kyc/submit', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          showSuccessNotification('KYC documents submitted successfully! Your account will be reviewed within 24-48 hours.');
+          setTimeout(() => {
+            window.location.href = 'donor-dashboard.html';
+          }, 2000);
+        } else {
+          throw new Error('Failed to submit documents');
+        }
+      } catch (error) {
+        console.error('Error submitting KYC:', error);
+        showErrorNotification('Failed to submit documents. Please try again.');
+      }
+    });
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include'
+        }).then(() => {
+          window.location.href = '/home';
+        });
+      }
+    }
+  </script>
+</body>
+</html>

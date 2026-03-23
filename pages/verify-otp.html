@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify OTP - LifeLink</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .auth-container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      max-width: 450px;
+      width: 100%;
+    }
+
+    .logo-section {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo-section h1 {
+      color: #c62828;
+      font-size: 32px;
+      margin: 0;
+    }
+
+    .logo-section p {
+      color: #757575;
+      font-size: 14px;
+      margin: 5px 0 0 0;
+    }
+
+    .info-section {
+      background: #dbeafe;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      border-left: 4px solid #0284c7;
+    }
+
+    .info-section p {
+      margin: 0;
+      color: #0c4a6e;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1f2937;
+      font-size: 14px;
+    }
+
+    .otp-input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .otp-digit {
+      width: 50px;
+      height: 50px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 600;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      color: #1f2937;
+      transition: border-color 0.3s;
+    }
+
+    .otp-digit:focus {
+      outline: none;
+      border-color: #c62828;
+      box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.1);
+    }
+
+    .otp-field-container {
+      margin-bottom: 20px;
+    }
+
+    .otp-field-container input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 18px;
+      letter-spacing: 10px;
+      text-align: center;
+      font-weight: 600;
+      transition: border-color 0.3s;
+      box-sizing: border-box;
+    }
+
+    .otp-field-container input:focus {
+      outline: none;
+      border-color: #c62828;
+      box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.1);
+    }
+
+    .timer-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .timer {
+      color: #c62828;
+      font-weight: 700;
+    }
+
+    .timer.expired {
+      color: #6b7280;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: #c62828;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #8e0000;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(198, 40, 40, 0.3);
+    }
+
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: #c62828;
+      border: 2px solid #c62828;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #fff8f8;
+    }
+
+    .btn-secondary:disabled {
+      border-color: #ccc;
+      color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .alert {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+      font-size: 14px;
+    }
+
+    .alert.success {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+      display: block;
+    }
+
+    .alert.error {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+      display: block;
+    }
+
+    .alert.info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+      display: block;
+    }
+
+    .link-bottom {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .link-bottom a {
+      color: #c62828;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .attempts-warning {
+      color: #b91c1c;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="logo-section">
+      <h1>🔐 Verify OTP</h1>
+      <p>Enter the code sent to your phone</p>
+    </div>
+
+    <div id="alert" class="alert"></div>
+
+    <div class="info-section">
+      <p>📱 We've sent a 6-digit code to your phone</p>
+      <p id="phoneDisplay" style="margin-top: 8px; font-weight: 600;"></p>
+    </div>
+
+    <form id="verifyForm">
+      <!-- OTP Input -->
+      <div class="otp-field-container">
+        <label for="otp">Enter OTP Code</label>
+        <input 
+          type="text" 
+          id="otp" 
+          name="otp" 
+          placeholder="000000" 
+          maxlength="6"
+          inputmode="numeric"
+          required
+        >
+      </div>
+
+      <!-- Timer & Resend -->
+      <div class="timer-container">
+        <span>⏱️ <span class="timer" id="timer">60s</span></span>
+        <button 
+          type="button" 
+          class="btn-secondary" 
+          id="resendBtn" 
+          onclick="resendOTP()"
+          disabled
+        >
+          Resend Code
+        </button>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn-primary" id="submitBtn">
+        Verify & Complete Registration
+      </button>
+    </form>
+
+    <div class="link-bottom">
+      <a href="/register-otp.html">← Back to Registration</a>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('verifyForm');
+    const otpInput = document.getElementById('otp');
+    const alertDiv = document.getElementById('alert');
+    const submitBtn = document.getElementById('submitBtn');
+    const resendBtn = document.getElementById('resendBtn');
+    const timerDisplay = document.getElementById('timer');
+    const phoneDisplay = document.getElementById('phoneDisplay');
+
+    let timeLeft = 60;
+    let phone = localStorage.getItem('pendingPhone');
+    let role = localStorage.getItem('pendingRole');
+
+    // Show phone number
+    if (phone) {
+      phoneDisplay.textContent = `📞 ${phone.slice(0, -4)}****`;
+    } else {
+      window.location.href = '/register-otp.html';
+    }
+
+    // Allow only digits in OTP input
+    otpInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    });
+
+    // Countdown timer
+    const timerInterval = setInterval(() => {
+      timeLeft--;
+      timerDisplay.textContent = `${timeLeft}s`;
+
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        timerDisplay.classList.add('expired');
+        timerDisplay.textContent = 'Expired';
+        resendBtn.disabled = false;
+      } else if (timeLeft <= 10) {
+        timerDisplay.style.color = '#dc2626';
+      }
+    }, 1000);
+
+    function showAlert(message, type) {
+      alertDiv.textContent = message;
+      alertDiv.className = `alert ${type}`;
+      alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    async function resendOTP() {
+      resendBtn.disabled = true;
+      resendBtn.textContent = 'Sending...';
+
+      try {
+        const response = await fetch('/api/resend-otp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ phone })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showAlert('✅ Code resent! Check your phone.', 'success');
+          
+          // Reset timer
+          timeLeft = 60;
+          timerDisplay.textContent = '60s';
+          timerDisplay.classList.remove('expired');
+          timerDisplay.style.color = '#c62828';
+
+          // Restart countdown
+          const newInterval = setInterval(() => {
+            timeLeft--;
+            timerDisplay.textContent = `${timeLeft}s`;
+
+            if (timeLeft <= 0) {
+              clearInterval(newInterval);
+              timerDisplay.classList.add('expired');
+              timerDisplay.textContent = 'Expired';
+              resendBtn.disabled = false;
+            }
+          }, 1000);
+        } else {
+          showAlert(`❌ ${data.message}`, 'error');
+          resendBtn.disabled = false;
+        }
+      } catch (error) {
+        showAlert('❌ Failed to resend. Please try again.', 'error');
+        resendBtn.disabled = false;
+      }
+
+      resendBtn.textContent = 'Resend Code';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const otpCode = otpInput.value.trim();
+
+      if (otpCode.length !== 6) {
+        showAlert('❌ Please enter a 6-digit code', 'error');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="loading"></span>Verifying...';
+
+      try {
+        const response = await fetch('/api/verify-otp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            phone,
+            otp: otpCode,
+            role
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showAlert('✅ ' + data.message, 'success');
+          
+          // Clear localStorage
+          localStorage.removeItem('pendingPhone');
+          localStorage.removeItem('pendingRole');
+
+          // Redirect after 2 seconds
+          setTimeout(() => {
+            if (role === 'donor') {
+              window.location.href = '/donor-dashboard';
+            } else {
+              window.location.href = '/pages/hospital-kyc.html';
+            }
+          }, 2000);
+        } else {
+          showAlert(`❌ ${data.message}`, 'error');
+          if (data.attemptsLeft !== undefined) {
+            const attemptsMsg = `<span class="attempts-warning">⚠️ ${data.attemptsLeft} attempt${data.attemptsLeft === 1 ? '' : 's'} remaining</span>`;
+            alertDiv.innerHTML += attemptsMsg;
+          }
+        }
+      } catch (error) {
+        showAlert('❌ Connection error. Please try again.', 'error');
+        console.error('Error:', error);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Verify & Complete Registration';
+      }
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      clearInterval(timerInterval);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donation History - LifeLink</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="dashboard" data-user-role="donor">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/donation-history" class="logo">
+          <img src="../New%20folder/logo.png" alt="LifeLink logo" class="logo-img">
+          <span class="logo-text">LifeLink</span>
+        </a>
+        <nav class="nav">
+          <a href="donor-dashboard.html" class="nav-link">Dashboard</a>
+          <a href="profile-donor.html" class="nav-link">Profile</a>
+          <a href="#" class="nav-link active">History</a>
+          <div class="nav-button">
+            <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+          </div>
+        </nav>
+        <button class="burger-menu" aria-label="Toggle menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div class="container">
+    <div class="dashboard">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-title">Menu</div>
+        <div class="sidebar-menu">
+          <a href="donor-dashboard.html" class="sidebar-link">
+            <span class="sidebar-link-icon">🏠</span>
+            <span>Dashboard</span>
+          </a>
+          <a href="profile-donor.html" class="sidebar-link">
+            <span class="sidebar-link-icon">👤</span>
+            <span>My Profile</span>
+          </a>
+          <a href="#" class="sidebar-link active">
+            <span class="sidebar-link-icon">📋</span>
+            <span>Donation History</span>
+          </a>
+        </div>
+        <div class="sidebar-logout">
+          <button class="btn btn-secondary btn-block" onclick="logout()">Logout</button>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="main-content">
+        <h2>Donation History</h2>
+
+        <!-- STATS -->
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" style="color: var(--color-deep-red);">5</div>
+            <div class="stat-label">Total Donations</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" style="color: var(--color-light-green);">15</div>
+            <div class="stat-label">Lives Impacted</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">2,500 ml</div>
+            <div class="stat-label">Blood Donated</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">4.8⭐</div>
+            <div class="stat-label">Hospital Rating</div>
+          </div>
+        </div>
+
+        <!-- FILTER -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Donation Records</h3>
+          </div>
+          <div class="card-body">
+            <div class="filter-bar">
+              <div class="search-box">
+                <input type="text" id="search-history" class="form-input" placeholder="Search by hospital...">
+                <span class="search-icon">🔍</span>
+              </div>
+              <div class="filter-group">
+                <label>Sort by:</label>
+                <select class="form-select" style="max-width: 150px;">
+                  <option>Most Recent</option>
+                  <option>Oldest</option>
+                  <option>Hospital Name</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- DONATION RECORDS -->
+            <div class="requests-list">
+              <!-- Record 1 -->
+              <div class="card" style="border-left: 4px solid var(--color-light-green);">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <h4 style="margin: 0 0 4px 0;">Central Hospital</h4>
+                    <p style="margin: 0 0 8px 0; color: var(--color-gray-dark); font-size: 14px;">Emergency: Traffic Accident</p>
+                  </div>
+                  <span class="badge badge-success">Completed</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Date</p>
+                    <p style="margin: 0; font-weight: 600;">January 20, 2025</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Blood Type</p>
+                    <p style="margin: 0; font-weight: 600;">O+</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Amount</p>
+                    <p style="margin: 0; font-weight: 600;">500 ml</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Hospital Rating</p>
+                    <p style="margin: 0; font-weight: 600;">⭐⭐⭐⭐⭐ (5/5)</p>
+                  </div>
+                </div>
+                
+                <p style="margin: 0 0 12px 0; color: var(--color-gray-medium); font-size: 13px;">✓ Your donation helped save a life</p>
+                
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <button class="btn btn-small btn-secondary" onclick="downloadCertificate('1')">Download Certificate</button>
+                  <button class="btn btn-small" onclick="showQRCode('1')" style="background-color: var(--color-light-green); color: white;">📱 Show QR Code</button>
+                </div>
+              </div>
+
+              <!-- Record 2 -->
+              <div class="card" style="border-left: 4px solid var(--color-light-green);">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <h4 style="margin: 0 0 4px 0;">Clinic Espoir</h4>
+                    <p style="margin: 0 0 8px 0; color: var(--color-gray-dark); font-size: 14px;">Surgery Preparation</p>
+                  </div>
+                  <span class="badge badge-success">Completed</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Date</p>
+                    <p style="margin: 0; font-weight: 600;">December 15, 2024</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Blood Type</p>
+                    <p style="margin: 0; font-weight: 600;">O+</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Amount</p>
+                    <p style="margin: 0; font-weight: 600;">500 ml</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Hospital Rating</p>
+                    <p style="margin: 0; font-weight: 600;">⭐⭐⭐⭐ (4/5)</p>
+                  </div>
+                </div>
+                
+                <p style="margin: 0 0 12px 0; color: var(--color-gray-medium); font-size: 13px;">✓ Your donation helped save a life</p>
+                
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <button class="btn btn-small btn-secondary" onclick="downloadCertificate('2')">Download Certificate</button>
+                  <button class="btn btn-small" onclick="showQRCode('2')" style="background-color: var(--color-light-green); color: white;">📱 Show QR Code</button>
+                </div>
+              </div>
+
+              <!-- Record 3 -->
+              <div class="card" style="border-left: 4px solid var(--color-light-green);">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <h4 style="margin: 0 0 4px 0;">Medical Center</h4>
+                    <p style="margin: 0 0 8px 0; color: var(--color-gray-dark); font-size: 14px;">Blood Bank Replenishment</p>
+                  </div>
+                  <span class="badge badge-success">Completed</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Date</p>
+                    <p style="margin: 0; font-weight: 600;">November 10, 2024</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Blood Type</p>
+                    <p style="margin: 0; font-weight: 600;">O+</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Amount</p>
+                    <p style="margin: 0; font-weight: 600;">500 ml</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Hospital Rating</p>
+                    <p style="margin: 0; font-weight: 600;">⭐⭐⭐⭐⭐ (5/5)</p>
+                  </div>
+                </div>
+                
+                <p style="margin: 0 0 12px 0; color: var(--color-gray-medium); font-size: 13px;">✓ Your donation helped save a life</p>
+                
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <button class="btn btn-small btn-secondary" onclick="downloadCertificate('3')">Download Certificate</button>
+                  <button class="btn btn-small" onclick="showQRCode('3')" style="background-color: var(--color-light-green); color: white;">📱 Show QR Code</button>
+                </div>
+              </div>
+
+              <!-- Record 4 -->
+              <div class="card" style="border-left: 4px solid var(--color-light-green);">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <h4 style="margin: 0 0 4px 0;">St. Luke Hospital</h4>
+                    <p style="margin: 0 0 8px 0; color: var(--color-gray-dark); font-size: 14px;">Blood Bank Replenishment</p>
+                  </div>
+                  <span class="badge badge-success">Completed</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Date</p>
+                    <p style="margin: 0; font-weight: 600;">October 5, 2024</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Blood Type</p>
+                    <p style="margin: 0; font-weight: 600;">O+</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Amount</p>
+                    <p style="margin: 0; font-weight: 600;">500 ml</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Hospital Rating</p>
+                    <p style="margin: 0; font-weight: 600;">⭐⭐⭐⭐⭐ (5/5)</p>
+                  </div>
+                </div>
+                
+                <p style="margin: 0 0 12px 0; color: var(--color-gray-medium); font-size: 13px;">✓ Your donation helped save a life</p>
+                
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <button class="btn btn-small btn-secondary" onclick="downloadCertificate('4')">Download Certificate</button>
+                  <button class="btn btn-small" onclick="showQRCode('4')" style="background-color: var(--color-light-green); color: white;">📱 Show QR Code</button>
+                </div>
+              </div>
+
+              <!-- Record 5 -->
+              <div class="card" style="border-left: 4px solid var(--color-light-green);">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <h4 style="margin: 0 0 4px 0;">Red Cross Clinic</h4>
+                    <p style="margin: 0 0 8px 0; color: var(--color-gray-dark); font-size: 14px;">Emergency Reserve</p>
+                  </div>
+                  <span class="badge badge-success">Completed</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Date</p>
+                    <p style="margin: 0; font-weight: 600;">September 20, 2024</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Blood Type</p>
+                    <p style="margin: 0; font-weight: 600;">O+</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Amount</p>
+                    <p style="margin: 0; font-weight: 600;">500 ml</p>
+                  </div>
+                  <div>
+                    <p style="margin: 0 0 4px 0; color: var(--color-gray-medium); font-size: 13px;">Hospital Rating</p>
+                    <p style="margin: 0; font-weight: 600;">⭐⭐⭐ (3/5)</p>
+                  </div>
+                </div>
+                
+                <p style="margin: 0 0 12px 0; color: var(--color-gray-medium); font-size: 13px;">✓ Your donation helped save a life</p>
+                
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <button class="btn btn-small btn-secondary" onclick="downloadCertificate('5')">Download Certificate</button>
+                  <button class="btn btn-small" onclick="showQRCode('5')" style="background-color: var(--color-light-green); color: white;">📱 Show QR Code</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- IMPACT SUMMARY -->
+        <div class="card" style="background: linear-gradient(135deg, rgba(183, 28, 28, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%); border: 2px solid rgba(183, 28, 28, 0.2);">
+          <h3 class="mb-3">🌟 Your Impact Summary</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+              <p style="margin: 0 0 8px 0; color: var(--color-gray-medium); font-size: 13px;">Lives Potentially Saved</p>
+              <p style="margin: 0; font-size: 28px; font-weight: bold; color: var(--color-deep-red);">15+ 🩸</p>
+              <p style="margin: 4px 0 0 0; color: var(--color-gray-dark); font-size: 13px;">Each unit of blood can help 3 people</p>
+            </div>
+            <div>
+              <p style="margin: 0 0 8px 0; color: var(--color-gray-medium); font-size: 13px;">Total Blood Donated</p>
+              <p style="margin: 0; font-size: 28px; font-weight: bold; color: var(--color-light-green);">2,500 ml</p>
+              <p style="margin: 4px 0 0 0; color: var(--color-gray-dark); font-size: 13px;">You've donated 5 times</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- QR CODE MODAL -->
+  <div id="qrModal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header">
+        <h2>Donation QR Code</h2>
+        <button class="modal-close" onclick="closeModal('qrModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center">
+          <div id="qr-code-container" class="mb-4">
+            <!-- QR Code will be generated here -->
+          </div>
+          <p class="mb-3" style="color: var(--color-gray-dark);">
+            Show this QR code to hospital staff for verification during your donation visit.
+          </p>
+          <div class="alert alert-info">
+            <span class="alert-icon">ℹ️</span>
+            <div class="alert-content">
+              <p><strong>QR Verification:</strong> Hospitals can scan this code to instantly verify your donor identity, blood type, and donation history.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('qrModal')">Close</button>
+        <button class="btn btn-primary" onclick="downloadQRCode()">Download QR</button>
+      </div>
+    </div>
+  </div>
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom text-center">
+        <p>&copy; 2025 LifeLink. All rights reserved. | Connecting Lives Through Blood 🩸</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/script.js"></script>
+  <script>
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        window.location.href = '/home';
+      }
+    }
+
+    function downloadCertificate(id) {
+      alert('Downloading certificate for donation #' + id);
+      // In real app, this would generate a downloadable PDF certificate
+    }
+
+    function showQRCode(donationId) {
+      // In a real implementation, this would fetch the QR code data from the server
+      // For now, we'll simulate QR code display
+      const qrContainer = document.getElementById('qr-code-container');
+      
+      // Simulate QR code data (in real app, this would be fetched from API)
+      const qrData = {
+        donation_id: donationId,
+        donor_id: 'DONOR_' + Date.now(),
+        blood_type: 'O+',
+        verification_code: 'LL' + donationId + Math.random().toString(36).substr(2, 6).toUpperCase()
+      };
+
+      // Simple QR code representation (in real app, use a QR library)
+      qrContainer.innerHTML = `
+        <div style="background: white; padding: 20px; border-radius: 8px; display: inline-block; border: 2px solid var(--color-gray-light);">
+          <div style="font-family: monospace; font-size: 12px; line-height: 1.2; color: black;">
+            █▀▀▀▀▀█ █ ▀█▀ █▀▀▀▀▀█<br>
+            █ ███ █ █ █ █ █ ███ █<br>
+            █ ▀▀▀ █ █▄█▄█ █ ▀▀▀ █<br>
+            ▀▀▀▀▀▀▀ █ █ █ ▀▀▀▀▀▀▀<br>
+            █▀█▀▀█▄█▄█▄█▄█▀▀█▀█<br>
+            █ █ ▀█ ▀▄ ▄▀ █ ▀ █ █<br>
+            █ █ █ █ █ █ █ █ █ █<br>
+            ▀▀▀ ▀ ▀ ▀ ▀ ▀ ▀ ▀ ▀<br>
+          </div>
+          <div style="text-align: center; margin-top: 10px; font-size: 12px; color: var(--color-gray-dark);">
+            ${qrData.verification_code}
+          </div>
+        </div>
+        <p style="margin-top: 12px; font-size: 14px; color: var(--color-gray-medium);">
+          <strong>Verification Code:</strong> ${qrData.verification_code}
+        </p>
+      `;
+
+      openModal('qrModal');
+    }
+
+    function downloadQRCode() {
+      // In real implementation, this would download the actual QR code image
+      alert('QR Code downloaded successfully!');
+      closeModal('qrModal');
+    }
+  </script>
+</body>
+</html>

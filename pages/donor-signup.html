@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donor Signup - LifeLink</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="auth-page">
+  <div class="page-banner" style="--page-banner:url('../New%20folder/auth-banner.jpg');">
+    <h2>Become a Lifesaving Donor</h2>
+  </div>
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/home" class="logo">
+          <img src="../New%20folder/logo.png" alt="LifeLink logo" class="logo-img">
+          <span class="logo-text">LifeLink</span>
+        </a>
+        <nav class="nav">
+          <a href="/home" class="nav-link">Back to Home</a>
+          <button id="theme-toggle" title="Toggle dark/light theme">🌙</button>
+        </nav>
+        <button class="burger-menu" aria-label="Toggle menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div class="container container-sm py-5">
+    <div class="card">
+      <div class="card-header text-center">
+        <h2>Register as Blood Donor</h2>
+        <p class="text-muted">Join our community and save lives</p>
+      </div>
+
+      <div class="card-body">
+        <!-- ALERT MESSAGES -->
+        <div id="auth-alert" class="alert" style="display: none; margin-bottom: 20px;"></div>
+
+        <!-- SIGNUP FORM SECTION -->
+        <form id="donor-signup-form">
+          <!-- Personal Information -->
+          <fieldset>
+            <legend style="font-size: 16px; font-weight: 600; margin-bottom: 16px; display: block;">Personal Information</legend>
+
+            <div class="form-group">
+              <label class="form-label" for="full_name">Full Name</label>
+              <input type="text" id="full_name" class="form-input"  required>
+              <p class="form-hint">Your full legal name</p>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="user_name">User Name</label>
+              <input type="text" id="user_name" class="form-input"  required>
+              <p class="form-hint">Your nickname e.g Le_boss</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="email">Email Address</label>
+              <input type="email" id="email" class="form-input" placeholder="me@example.com">
+              <p class="form-hint">Put in correct email</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="phone">Phone Number</label>
+              <input type="tel" id="phone" class="form-input" placeholder="+237 6XX XXX XXX" required>
+              <p class="form-hint">With country code (e.g., +237 for Cameroon)</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="password">Password</label>
+              <input type="password" id="password" class="form-input" required>
+              <p class="form-hint">Create a strong password (min 6 characters)</p>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <div class="form-group">
+              <label class="form-label" for="location">City/Location</label>
+              <input type="text" id="location" class="form-input"  required>
+              <p class="form-hint">Your location or city</p>
+            </div>
+          </fieldset>
+            <div class="alert alert-info mt-4">
+              <span class="alert-icon">ℹ️</span>
+              <div class="alert-content">
+                <p><strong>Privacy Guaranteed:</strong> Your health information is encrypted and never shared. Only hospitals you connect with will see basic eligibility info.</p>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Terms & Conditions -->
+          <fieldset style="margin-top: 24px;">
+            <div class="form-check">
+              <input type="checkbox" id="terms-accept" class="form-check-input" required>
+              <label class="form-check-label" for="terms-accept">
+                I agree to the <a href="/privacy" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a>
+              </label>
+            </div>
+
+            <div class="form-check">
+              <input type="checkbox" id="marketing-opt-in" class="form-check-input">
+              <label class="form-check-label" for="marketing-opt-in">
+                Send me notifications about nearby blood requests (optional)
+              </label>
+            </div>
+          </fieldset>
+
+          <!-- Submit -->
+          <button type="submit" class="btn btn-primary btn-large mt-5 mb-3" id="signup-submit-btn">Create Account</button>
+
+          <p class="text-center text-muted">
+            Already have an account? 
+            <a href="/donor-login">Login here</a>
+          </p>
+        </form>
+
+        <!-- OTP VERIFICATION SECTION (Hidden until signup succeeds) -->
+        <div id="otp-section" style="display: none;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <h3>Verify Your Phone Number</h3>
+            <p class="text-muted">We sent a 6-digit code to <strong id="otp-phone-display"></strong></p>
+          </div>
+
+          <form id="otp-verification-form">
+            <div class="form-group">
+              <label class="form-label">Enter OTP Code</label>
+              <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 24px;">
+                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" required>
+                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" required>
+                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" required>
+                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" required>
+                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" required>
+                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" required>
+              </div>
+              <style>
+                .otp-input {
+                  width: 50px;
+                  height: 50px;
+                  font-size: 24px;
+                  text-align: center;
+                  border: 2px solid var(--color-gray-light);
+                  border-radius: 8px;
+                  font-weight: bold;
+                }
+                .otp-input:focus {
+                  border-color: var(--color-deep-red);
+                  outline: none;
+                  box-shadow: 0 0 0 3px rgba(183, 28, 28, 0.1);
+                }
+              </style>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-large mb-3" id="verify-submit-btn">Verify & Complete Registration</button>
+
+            <p class="text-center text-muted" style="font-size: 14px;">
+              Didn't receive code?
+              <a href="#" onclick="handleResendOtp(event)" id="resend-link">Resend in <span id="resend-timer">60</span>s</a>
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Eligibility Status (shown after interaction) -->
+    <div id="eligibility-status" class="mt-4"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom text-center">
+        <p>&copy; 2025 LifeLink. All rights reserved. | Connecting Lives Through Blood 🩸</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>

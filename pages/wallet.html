@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Wallet - LifeLink</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="dashboard" data-user-role="donor">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/wallet" class="logo">
+          <img src="../New%20folder/logo.png" alt="LifeLink logo" class="logo-img">
+          <span class="logo-text">LifeLink</span>
+        </a>
+        <nav class="nav">
+          <a href="donor-dashboard.html" class="nav-link">Dashboard</a>
+          <a href="#" class="nav-link active">My Wallet</a>
+          <div class="nav-button">
+            <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+          </div>
+        </nav>
+        <button class="burger-menu" aria-label="Toggle menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN DASHBOARD -->
+  <div class="container">
+    <div class="dashboard">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-title">Menu</div>
+        <div class="sidebar-menu">
+          <a href="donor-dashboard.html" class="sidebar-link">
+            <span class="sidebar-link-icon">🏠</span>
+            <span>Dashboard</span>
+          </a>
+          <a href="profile-donor.html" class="sidebar-link">
+            <span class="sidebar-link-icon">👤</span>
+            <span>My Profile</span>
+          </a>
+          <a href="donation-history.html" class="sidebar-link">
+            <span class="sidebar-link-icon">📋</span>
+            <span>Donation History</span>
+          </a>
+          <a href="#" class="sidebar-link active">
+            <span class="sidebar-link-icon">💰</span>
+            <span>My Wallet</span>
+          </a>
+          <a href="#" class="sidebar-link" onclick="openQRScanner()">
+            <span class="sidebar-link-icon">📱</span>
+            <span>Scan QR Code</span>
+          </a>
+          <a href="#" class="sidebar-link">
+            <span class="sidebar-link-icon">🔔</span>
+            <span>Notifications</span>
+          </a>
+        </div>
+        <div class="sidebar-logout">
+          <button class="btn btn-secondary btn-block" onclick="logout()">Logout</button>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="main-content">
+        <!-- WALLET HEADER -->
+        <div class="welcome-card">
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="font-size: 48px;">💰</div>
+            <div>
+              <h2>My LifeLink Wallet</h2>
+              <p class="welcome-text mb-0">Track your rewards and incentives earned through donations</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- WALLET STATS -->
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div style="font-size: 24px; margin-bottom: 8px;">🚗</div>
+            <div class="stat-value" id="transport-balance">0 XAF</div>
+            <div class="stat-label">Transport Balance</div>
+          </div>
+
+          <div class="stat-item">
+            <div style="font-size: 24px; margin-bottom: 8px;">🏥</div>
+            <div class="stat-value" id="pharmacy-vouchers">0</div>
+            <div class="stat-label">Pharmacy Vouchers</div>
+          </div>
+
+          <div class="stat-item">
+            <div style="font-size: 24px; margin-bottom: 8px;">🧪</div>
+            <div class="stat-value" id="lab-vouchers">0</div>
+            <div class="stat-label">Lab Test Vouchers</div>
+          </div>
+
+          <div class="stat-item">
+            <div style="font-size: 24px; margin-bottom: 8px;">⭐</div>
+            <div class="stat-value" id="total-rewards">0</div>
+            <div class="stat-label">Total Rewards Earned</div>
+          </div>
+        </div>
+
+        <!-- ACTIVE VOUCHERS -->
+        <div class="card">
+          <div class="card-header">
+            <h3>🎫 Active Vouchers</h3>
+          </div>
+          <div class="card-body">
+            <div id="active-vouchers" class="vouchers-grid">
+              <!-- Vouchers will be loaded here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TRANSPORT INCENTIVES -->
+        <div class="card">
+          <div class="card-header">
+            <h3>🚗 Transport Incentives</h3>
+          </div>
+          <div class="card-body">
+            <div id="transport-history" class="incentives-list">
+              <!-- Transport incentives will be loaded here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- REWARDS HISTORY -->
+        <div class="card">
+          <div class="card-header">
+            <h3>📊 Rewards History</h3>
+          </div>
+          <div class="card-body">
+            <div id="rewards-history" class="history-list">
+              <!-- Rewards history will be loaded here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- HOW TO EARN MORE -->
+        <div class="card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(183, 28, 28, 0.05) 100%); border-left: 4px solid var(--color-light-green);">
+          <h3 class="mb-3">💡 How to Earn More Rewards</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+            <div style="padding: 16px; background: white; border-radius: 8px; border: 1px solid var(--color-gray-light);">
+              <h4 style="margin: 0 0 8px 0; color: var(--color-deep-red);">🏥 Complete Donations</h4>
+              <p style="margin: 0; color: var(--color-gray-medium); font-size: 14px;">Earn transport fare and vouchers for each successful donation</p>
+            </div>
+            <div style="padding: 16px; background: white; border-radius: 8px; border: 1px solid var(--color-gray-light);">
+              <h4 style="margin: 0 0 8px 0; color: var(--color-deep-red);">📱 Regular Check-ins</h4>
+              <p style="margin: 0; color: var(--color-gray-medium); font-size: 14px;">Scan QR codes at hospitals to unlock additional incentives</p>
+            </div>
+            <div style="padding: 16px; background: white; border-radius: 8px; border: 1px solid var(--color-gray-light);">
+              <h4 style="margin: 0 0 8px 0; color: var(--color-deep-red);">👥 Referral Program</h4>
+              <p style="margin: 0; color: var(--color-gray-medium); font-size: 14px;">Earn bonus rewards when friends you refer become donors</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- QR SCANNER MODAL -->
+  <div id="qrScannerModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>QR Code Scanner</h2>
+        <button class="modal-close" onclick="closeModal('qrScannerModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center">
+          <div id="scanner-container" class="mb-4" style="background: var(--color-soft-gray); padding: 40px; border-radius: 8px; border: 2px dashed var(--color-gray-light);">
+            <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
+            <p style="color: var(--color-gray-dark); margin: 0;">Camera access required for QR scanning</p>
+            <button class="btn btn-primary mt-3" onclick="startQRScan()">Start Camera</button>
+          </div>
+
+          <div id="scan-result" class="mt-4" style="display: none;">
+            <div class="alert alert-success">
+              <span class="alert-icon">✓</span>
+              <div class="alert-content">
+                <p><strong>Hospital Check-in Successful!</strong></p>
+                <div id="scan-details" class="mt-3 text-left">
+                  <!-- Scan details will be displayed here -->
+                </div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <button class="btn btn-primary" onclick="confirmCheckIn()">Confirm Check-in</button>
+              <button class="btn btn-secondary" onclick="resetScanner()">Scan Another</button>
+            </div>
+          </div>
+
+          <div class="alert alert-info mt-4">
+            <span class="alert-icon">ℹ️</span>
+            <div class="alert-content">
+              <p><strong>How to use:</strong> When you arrive at the hospital for your donation, scan the hospital's QR code to check-in and unlock your transport incentives.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('qrScannerModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom text-center">
+        <p>&copy; 2025 LifeLink. All rights reserved. | Connecting Lives Through Blood 🩸</p>
+      </div>
+    </div>
+  </footer>
+
+  <style>
+    .vouchers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .voucher-card {
+      border: 2px solid var(--color-gray-light);
+      border-radius: 12px;
+      padding: 20px;
+      background: linear-gradient(135deg, white 0%, var(--color-soft-gray) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .voucher-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--color-deep-red), var(--color-light-green));
+    }
+
+    .voucher-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .voucher-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .voucher-badge {
+      background: var(--color-light-green);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .voucher-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: var(--color-deep-red);
+      margin: 8px 0;
+    }
+
+    .voucher-details {
+      color: var(--color-gray-medium);
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .incentives-list, .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .incentive-item, .history-item {
+      padding: 16px;
+      border: 1px solid var(--color-gray-light);
+      border-radius: 8px;
+      background: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .incentive-info h4, .history-info h4 {
+      margin: 0 0 4px 0;
+      font-size: 16px;
+    }
+
+    .incentive-info p, .history-info p {
+      margin: 0;
+      color: var(--color-gray-medium);
+      font-size: 14px;
+    }
+
+    .incentive-amount, .history-amount {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--color-deep-red);
+    }
+  </style>
+
+  <script src="/js/script.js"></script>
+  <script>
+    // Load wallet data
+    async function loadWalletData() {
+      try {
+        const response = await fetch('/api/wallet', {
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          const walletData = await response.json();
+          updateWalletStats(walletData);
+          displayActiveVouchers(walletData.vouchers || []);
+          displayTransportHistory(walletData.transport_history || []);
+          displayRewardsHistory(walletData.rewards_history || []);
+        } else {
+          console.error('Failed to load wallet data');
+        }
+      } catch (error) {
+        console.error('Error loading wallet data:', error);
+      }
+    }
+
+    function updateWalletStats(data) {
+      document.getElementById('transport-balance').textContent = `${data.transport_balance || 0} XAF`;
+      document.getElementById('pharmacy-vouchers').textContent = data.pharmacy_vouchers || 0;
+      document.getElementById('lab-vouchers').textContent = data.lab_vouchers || 0;
+      document.getElementById('total-rewards').textContent = data.total_rewards || 0;
+    }
+
+    function displayActiveVouchers(vouchers) {
+      const container = document.getElementById('active-vouchers');
+
+      if (vouchers.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted">No active vouchers at this time</p>';
+        return;
+      }
+
+      container.innerHTML = vouchers.map(voucher => `
+        <div class="voucher-card">
+          <div class="voucher-header">
+            <h3 class="voucher-title">${voucher.title}</h3>
+            <span class="voucher-badge">ACTIVE</span>
+          </div>
+          <div class="voucher-value">${voucher.value}</div>
+          <div class="voucher-details">
+            <p>${voucher.description}</p>
+            <p><strong>Expires:</strong> ${voucher.expiry_date}</p>
+          </div>
+          <button class="btn btn-primary btn-small" onclick="useVoucher('${voucher.id}')">Use Voucher</button>
+        </div>
+      `).join('');
+    }
+
+    function displayTransportHistory(history) {
+      const container = document.getElementById('transport-history');
+
+      if (history.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted">No transport incentives yet</p>';
+        return;
+      }
+
+      container.innerHTML = history.map(item => `
+        <div class="incentive-item">
+          <div class="incentive-info">
+            <h4>${item.hospital_name}</h4>
+            <p>${item.date} • ${item.donation_type}</p>
+          </div>
+          <div class="incentive-amount">+${item.amount} XAF</div>
+        </div>
+      `).join('');
+    }
+
+    function displayRewardsHistory(history) {
+      const container = document.getElementById('rewards-history');
+
+      if (history.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted">No rewards history yet</p>';
+        return;
+      }
+
+      container.innerHTML = history.map(item => `
+        <div class="history-item">
+          <div class="history-info">
+            <h4>${item.reward_type}</h4>
+            <p>${item.date} • ${item.description}</p>
+          </div>
+          <div class="history-amount">${item.value}</div>
+        </div>
+      `).join('');
+    }
+
+    function useVoucher(voucherId) {
+      // In real implementation, this would mark voucher as used
+      if (confirm('Use this voucher?')) {
+        showSuccessNotification('Voucher used successfully!');
+        loadWalletData(); // Refresh data
+      }
+    }
+
+    // QR Scanner functionality (same as dashboard)
+    function openQRScanner() {
+      openModal('qrScannerModal');
+    }
+
+    function startQRScan() {
+      const scannerContainer = document.getElementById('scanner-container');
+      const scanResult = document.getElementById('scan-result');
+      const scanDetails = document.getElementById('scan-details');
+
+      scannerContainer.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 16px;">📷</div>
+        <p style="color: var(--color-gray-dark); margin: 0;">Scanning QR code...</p>
+        <div class="mt-3">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 100%; animation: progress 2s ease-in-out;"></div>
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => {
+        const mockCheckInData = {
+          hospital_name: 'Central Hospital',
+          check_in_time: new Date().toLocaleTimeString(),
+          donation_id: 'DON_' + Date.now(),
+          incentives_earned: '5000 XAF transport + Pharmacy voucher'
+        };
+
+        scanDetails.innerHTML = `
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+              <strong>Hospital:</strong> ${mockCheckInData.hospital_name}<br>
+              <strong>Check-in Time:</strong> ${mockCheckInData.check_in_time}<br>
+              <strong>Donation ID:</strong> ${mockCheckInData.donation_id}
+            </div>
+            <div>
+              <strong>Incentives Earned:</strong> ${mockCheckInData.incentives_earned}
+            </div>
+          </div>
+        `;
+
+        scannerContainer.style.display = 'none';
+        scanResult.style.display = 'block';
+      }, 2000);
+    }
+
+    function confirmCheckIn() {
+      fetch('/api/donations/checkin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          hospital_id: 'HOSP_123',
+          donation_id: 'DON_' + Date.now()
+        })
+      })
+      .then(response => {
+        if (response.ok) {
+          showSuccessNotification('Check-in confirmed! Transport incentives added to your wallet.');
+          closeModal('qrScannerModal');
+          resetScanner();
+          loadWalletData(); // Refresh wallet data
+        } else {
+          throw new Error('Failed to confirm check-in');
+        }
+      })
+      .catch(error => {
+        console.error('Error confirming check-in:', error);
+        showErrorNotification('Failed to confirm check-in. Please try again.');
+      });
+    }
+
+    function resetScanner() {
+      const scannerContainer = document.getElementById('scanner-container');
+      const scanResult = document.getElementById('scan-result');
+
+      scannerContainer.style.display = 'block';
+      scanResult.style.display = 'none';
+
+      scannerContainer.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
+        <p style="color: var(--color-gray-dark); margin: 0;">Camera access required for QR scanning</p>
+        <button class="btn btn-primary mt-3" onclick="startQRScan()">Start Camera</button>
+      `;
+    }
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include'
+        }).then(() => {
+          window.location.href = '/home';
+        });
+      }
+    }
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+      loadWalletData();
+    });
+  </script>
+</body>
+</html>

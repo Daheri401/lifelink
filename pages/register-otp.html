@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - LifeLink</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .auth-container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      max-width: 450px;
+      width: 100%;
+    }
+
+    .logo-section {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo-section h1 {
+      color: #c62828;
+      font-size: 32px;
+      margin: 0;
+    }
+
+    .logo-section p {
+      color: #757575;
+      font-size: 14px;
+      margin: 5px 0 0 0;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1f2937;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #c62828;
+      box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.1);
+    }
+
+    .role-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .role-option {
+      padding: 15px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: #f9fafb;
+    }
+
+    .role-option:hover {
+      border-color: #c62828;
+      background: #fff8f8;
+    }
+
+    .role-option input[type="radio"] {
+      display: none;
+    }
+
+    .role-option input[type="radio"]:checked + label {
+      color: #c62828;
+      font-weight: 700;
+    }
+
+    .role-option.selected {
+      border-color: #c62828;
+      background: #fff8f8;
+    }
+
+    .role-option label {
+      margin: 0;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: #c62828;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #8e0000;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(198, 40, 40, 0.3);
+    }
+
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .alert {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+      font-size: 14px;
+    }
+
+    .alert.success {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+      display: block;
+    }
+
+    .alert.error {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+      display: block;
+    }
+
+    .alert.info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+      display: block;
+    }
+
+    .link-bottom {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .link-bottom a {
+      color: #c62828;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .link-bottom a:hover {
+      text-decoration: underline;
+    }
+
+    .password-requirements {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 5px;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .phone-format {
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="logo-section">
+      <h1>🩸 LifeLink</h1>
+      <p>Create your account</p>
+    </div>
+
+    <div id="alert" class="alert"></div>
+
+    <form id="registerForm">
+      <!-- Full Name -->
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input 
+          type="text" 
+          id="name" 
+          name="name" 
+          placeholder="John Doe" 
+          required
+        >
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email" 
+          placeholder="john@example.com" 
+          required
+        >
+      </div>
+
+      <!-- Phone -->
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input 
+          type="tel" 
+          id="phone" 
+          name="phone" 
+          placeholder="+237 6XXXXXXXX" 
+          required
+          class="phone-format"
+        >
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          placeholder="••••••••" 
+          required
+        >
+        <div class="password-requirements">✓ Minimum 6 characters</div>
+      </div>
+
+      <!-- Role Selection -->
+      <label style="display: block; font-weight: 600; margin-bottom: 12px; color: #1f2937;">Register as:</label>
+      <div class="role-selector">
+        <div class="role-option" onclick="selectRole('donor', this)">
+          <input type="radio" id="donor" name="role" value="donor" required>
+          <label for="donor">🩸 Donor</label>
+        </div>
+        <div class="role-option" onclick="selectRole('hospital', this)">
+          <input type="radio" id="hospital" name="role" value="hospital" required>
+          <label for="hospital">🏥 Hospital</label>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn-primary" id="submitBtn">
+        Send OTP to My Phone
+      </button>
+    </form>
+
+    <div class="link-bottom">
+      Already have an account? <a href="/login">Login here</a>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('registerForm');
+    const alertDiv = document.getElementById('alert');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function showAlert(message, type) {
+      alertDiv.textContent = message;
+      alertDiv.className = `alert ${type}`;
+      setTimeout(() => {
+        alertDiv.className = 'alert';
+      }, 5000);
+    }
+
+    function selectRole(role, element) {
+      document.querySelectorAll('.role-option').forEach(el => el.classList.remove('selected'));
+      element.classList.add('selected');
+      document.getElementById(role).checked = true;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        password: document.getElementById('password').value,
+        role: document.querySelector('input[name="role"]:checked').value
+      };
+
+      // Validation
+      if (formData.password.length < 6) {
+        showAlert('❌ Password must be at least 6 characters', 'error');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="loading"></span>Sending OTP...';
+
+      try {
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showAlert(`✅ OTP sent! Check your phone (ending in ${formData.phone.slice(-4)})`, 'success');
+          // Store data for OTP verification
+          localStorage.setItem('pendingPhone', formData.phone);
+          localStorage.setItem('pendingRole', formData.role);
+          
+          // Redirect to OTP verification after 2 seconds
+          setTimeout(() => {
+            window.location.href = '/verify-otp.html';
+          }, 2000);
+        } else {
+          showAlert(`❌ ${data.message}`, 'error');
+        }
+      } catch (error) {
+        showAlert('❌ Connection error. Please try again.', 'error');
+        console.error('Error:', error);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Send OTP to My Phone';
+      }
+    });
+  </script>
+</body>
+</html>

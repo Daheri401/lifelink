@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donor Dashboard - LifeLink</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="dashboard" data-user-role="donor">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/home" class="logo">
+          <img src="../New%20folder/logo.png" alt="LifeLink logo" class="logo-img">
+          <span class="logo-text">LifeLink</span>
+        </a>
+        <nav class="nav">
+          <a href="#" class="nav-link active">Dashboard</a>
+          <a href="profile-donor.html" class="nav-link">Profile</a>
+          <a href="donation-history.html" class="nav-link">History</a>
+          <a href="../index.html" class="nav-link">Help</a>
+          <button id="theme-toggle" title="Toggle dark/light theme">🌙</button>
+          <div class="nav-button">
+            <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+          </div>
+        </nav>
+        <button class="burger-menu" aria-label="Toggle menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN DASHBOARD -->
+  <div class="container">
+    <div class="dashboard">
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-title">Menu</div>
+        <div class="sidebar-menu">
+          <a href="#" class="sidebar-link active">
+            <span class="sidebar-link-icon">🏠</span>
+            <span>Dashboard</span>
+          </a>
+          <a href="profile-donor.html" class="sidebar-link">
+            <span class="sidebar-link-icon">👤</span>
+            <span>My Profile</span>
+          </a>
+          <a href="donation-history.html" class="sidebar-link">
+            <span class="sidebar-link-icon">📋</span>
+            <span>Donation History</span>
+          </a>
+          <a href="#" class="sidebar-link" onclick="openWallet()">
+            <span class="sidebar-link-icon">💰</span>
+            <span>My Wallet</span>
+          </a>
+          <a href="#" class="sidebar-link" onclick="openQRScanner()">
+            <span class="sidebar-link-icon">📱</span>
+            <span>Scan QR Code</span>
+          </a>
+          <a href="#" class="sidebar-link">
+            <span class="sidebar-link-icon">🔔</span>
+            <span>Notifications</span>
+          </a>
+        </div>
+        <div class="sidebar-logout">
+          <button class="btn btn-secondary btn-block" onclick="logout()">Logout</button>
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="main-content">
+        <!-- HERO SECTION -->
+        <div class="hero-section">
+          <div class="hero-content">
+            <div class="hero-text">
+              <h1>Welcome back, <span id="user-name">Donor</span>! 👋</h1>
+              <p>Your generosity saves lives. Ready to make a difference today?</p>
+              <div class="hero-stats">
+                <div class="hero-stat">
+                  <span class="stat-number" id="total-donations">0</span>
+                  <span class="stat-label">Donations</span>
+                </div>
+                <div class="hero-stat">
+                  <span class="stat-number" id="lives-impacted">0</span>
+                  <span class="stat-label">Lives Saved</span>
+                </div>
+                <div class="hero-stat">
+                  <span class="stat-number" id="next-donation">N/A</span>
+                  <span class="stat-label">Days Until Next</span>
+                </div>
+              </div>
+            </div>
+            <div class="hero-avatar">
+              <img src="../New%20folder/user-avatar.png" alt="Donor avatar" class="avatar-large">
+              <div class="blood-type-badge" id="blood-group-badge">O+</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VERIFICATION STATUS -->
+        <!-- KYC STATUS ALERT -->
+        <div id="kyc-status-alert" class="kyc-status-alert" style="display: none; margin-bottom: 20px;">
+          <!-- KYC status message will be loaded here -->
+        </div>
+
+        <div class="status-card">
+          <div class="status-header">
+            <h3>🔒 Verification Status</h3>
+            <span class="status-indicator" id="verification-indicator">Checking...</span>
+          </div>
+          <div id="verification-status" class="status-content">
+            <!-- Verification status will be loaded here -->
+          </div>
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <div class="actions-grid">
+          <div class="action-card" onclick="openWallet()">
+            <div class="action-icon">💰</div>
+            <h4>My Wallet</h4>
+            <p>View incentives & rewards</p>
+          </div>
+          <div class="action-card" onclick="openQRScanner()">
+            <div class="action-icon">📱</div>
+            <h4>Scan QR Code</h4>
+            <p>Check-in at hospital</p>
+          </div>
+          <div class="action-card" onclick="loadRequests()">
+            <div class="action-icon">🔍</div>
+            <h4>Find Requests</h4>
+            <p>Browse available donations</p>
+          </div>
+          <div class="action-card" onclick="window.location.href='profile-donor.html'">
+            <div class="action-icon">⚙️</div>
+            <h4>Settings</h4>
+            <p>Update your profile</p>
+          </div>
+        </div>
+
+        <!-- URGENT REQUESTS SECTION -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3>🚨 Urgent Blood Requests Near You</h3>
+            <button class="btn btn-outline" onclick="loadRequests()">Refresh</button>
+          </div>
+          <div class="requests-container" id="urgent-requests-container">
+            <!-- Urgent requests will be loaded here -->
+          </div>
+        </div>
+
+        <!-- ALL REQUESTS SECTION -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3>🩸 All Blood Requests</h3>
+          </div>
+          <div class="filters-bar">
+            <div class="search-input">
+              <input type="text" id="search-requests" placeholder="Search hospitals or locations...">
+              <span class="search-icon">🔍</span>
+            </div>
+            <div class="filter-buttons">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="critical">Critical</button>
+              <button class="filter-btn" data-filter="urgent">Urgent</button>
+              <button class="filter-btn" data-filter="routine">Routine</button>
+            </div>
+          </div>
+          <div class="requests-list" id="all-requests-container">
+            <!-- All requests will be loaded here -->
+          </div>
+        </div>
+
+        <!-- DONATION TIPS -->
+        <div class="tips-card">
+          <div class="tips-header">
+            <div class="tips-icon">💡</div>
+            <h4>Donation Tips</h4>
+          </div>
+          <ul class="tips-list">
+            <li>Drink plenty of water before donating</li>
+            <li>Get a good night's sleep before your appointment</li>
+            <li>Eat a healthy meal 2-3 hours before donation</li>
+            <li>Bring a valid ID to the donation center</li>
+            <li>You can donate every 56 days (8 weeks)</li>
+          </ul>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  
+  <!-- Request Details Modal -->
+  <div id="requestDetailsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Request Details</h2>
+        <button class="modal-close" onclick="closeModal('requestDetailsModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h3 style="margin-bottom: 8px;">Central Hospital</h3>
+              <p style="margin: 0; color: var(--color-gray-dark);">📍 Yaoundé Center • 2.3 km away</p>
+            </div>
+            <span class="request-blood-type" style="font-size: 24px;">O-</span>
+          </div>
+          
+          <div class="alert alert-warning">
+            <span class="alert-icon">🚨</span>
+            <div class="alert-content">
+              <p><strong>CRITICAL</strong> - Emergency response needed</p>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div style="padding: 12px; background-color: var(--color-soft-gray); border-radius: 8px;">
+                <p style="margin: 0; color: var(--color-gray-medium); font-size: 13px;">Units Needed</p>
+                <p style="margin: 0; font-size: 20px; font-weight: bold;">3 units</p>
+              </div>
+              <div style="padding: 12px; background-color: var(--color-soft-gray); border-radius: 8px;">
+                <p style="margin: 0; color: var(--color-gray-medium); font-size: 13px;">Urgency</p>
+                <p style="margin: 0; font-size: 20px; font-weight: bold; color: var(--color-deep-red);">CRITICAL</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <h4>Case Summary</h4>
+            <p style="margin: 0; color: var(--color-gray-dark);">Traffic accident victim requires immediate blood transfusion. Your O- blood type is universal and critical for this case.</p>
+          </div>
+
+          <div class="mb-3">
+            <h4>Contact Information</h4>
+            <p style="margin: 0 0 8px 0;">
+              <strong>Dr. Marie Sangue</strong><br>
+              Blood Bank Manager
+            </p>
+            <p style="margin: 0 0 8px 0; color: var(--color-gray-dark);">
+              📞 +237 6XX XXX XXX<br>
+              📧 bloodbank@centralhospital.cm
+            </p>
+          </div>
+
+          <div class="alert alert-info">
+            <span class="alert-icon">ℹ️</span>
+            <div class="alert-content">
+              <p><strong>Safety:</strong> The hospital will verify your donor information before your arrival. Your home address will NOT be shared.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('requestDetailsModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmAcceptance()">Accept Request</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Confirm Request Acceptance</h2>
+        <button class="modal-close" onclick="closeModal('confirmModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-success mb-4">
+          <span class="alert-icon">✓</span>
+          <div class="alert-content">
+            <p><strong>Great!</strong> You're about to save a life!</p>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <h4>Before You Proceed:</h4>
+          <ul style="padding-left: 20px; color: var(--color-gray-dark); line-height: 1.8;">
+            <li>You must visit the hospital within 24 hours</li>
+            <li>Bring your ID and phone for verification</li>
+            <li>The donation process takes about 45-60 minutes</li>
+            <li>You'll receive a donation certificate</li>
+          </ul>
+        </div>
+
+        <div class="form-check mb-4">
+          <input type="checkbox" id="confirm-check" class="form-check-input" required>
+          <label class="form-check-label" for="confirm-check">
+            I confirm I'm ready to donate and available within 24 hours
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('confirmModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="completeAcceptance()">Confirm & Accept</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR SCANNER MODAL -->
+  <div id="qrScannerModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2>QR Code Scanner</h2>
+        <button class="modal-close" onclick="closeModal('qrScannerModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center">
+          <div id="scanner-container" class="mb-4" style="background: var(--color-soft-gray); padding: 40px; border-radius: 8px; border: 2px dashed var(--color-gray-light);">
+            <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
+            <p style="color: var(--color-gray-dark); margin: 0;">Camera access required for QR scanning</p>
+            <button class="btn btn-primary mt-3" onclick="startQRScan()">Start Camera</button>
+          </div>
+          
+          <div id="scan-result" class="mt-4" style="display: none;">
+            <div class="alert alert-success">
+              <span class="alert-icon">✓</span>
+              <div class="alert-content">
+                <p><strong>QR Code Scanned Successfully! ✅</strong></p>
+                <div id="scan-details" class="mt-3 text-left">
+                  <!-- Scan details will be displayed here -->
+                </div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <button class="btn btn-primary" onclick="confirmCheckIn()">✅ Confirm Donation Completed</button>
+              <button class="btn btn-secondary" onclick="resetScanner()">Scan Another QR</button>
+            </div>
+          </div>
+
+          <div class="alert alert-info mt-4">
+            <span class="alert-icon">ℹ️</span>
+            <div class="alert-content">
+              <p><strong>How to use:</strong> When you arrive at the hospital for your donation, scan the hospital's QR code to check-in and unlock your transport incentives.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('qrScannerModal')">Close</button>
+      </div>
+    </div>
+  </div>
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom text-center">
+        <p>&copy; 2025 LifeLink. All rights reserved. | Connecting Lives Through Blood 🩸</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/script.js"></script>
+  <script>
+    // Load donor profile information
+    async function loadProfile() {
+      try {
+        const response = await fetch('/api/profile', {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const profile = await response.json();
+          document.getElementById('user-name').textContent = profile.name;
+          document.getElementById('blood-group-badge').textContent = profile.blood_type;
+          
+          // Load verification status
+          loadVerificationStatus(profile);
+        } else {
+          console.error('Failed to load profile');
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      }
+    }
+
+    // Load verification status
+    function loadVerificationStatus(profile) {
+      const statusContainer = document.getElementById('verification-status');
+      
+      if (profile.kyc_verified) {
+        statusContainer.innerHTML = `
+          <div class="alert alert-success">
+            <span class="alert-icon">✓</span>
+            <div class="alert-content">
+              <p><strong>Account Verified!</strong> You can now accept blood requests and participate in donations.</p>
+            </div>
+          </div>
+        `;
+      } else if (profile.kyc_pending) {
+        statusContainer.innerHTML = `
+          <div class="alert alert-warning">
+            <span class="alert-icon">⏳</span>
+            <div class="alert-content">
+              <p><strong>Verification Pending</strong> Your KYC documents are being reviewed by our admin team. You'll be notified once approved.</p>
+            </div>
+          </div>
+        `;
+      } else {
+        statusContainer.innerHTML = `
+          <div class="alert alert-info">
+            <span class="alert-icon">📋</span>
+            <div class="alert-content">
+              <p><strong>KYC Verification Required</strong> Complete your verification to start accepting blood requests.</p>
+              <button class="btn btn-primary btn-small mt-3" onclick="startKYCVerification()">Start Verification</button>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Load donor statistics
+    async function loadStats() {
+      try {
+        const response = await fetch('/api/donor/stats', {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const stats = await response.json();
+          document.getElementById('total-donations').textContent = stats.total_donations || 0;
+          document.getElementById('nearby-requests').textContent = stats.nearby_requests || 0;
+          document.getElementById('next-donation').textContent = stats.next_donation || 'N/A';
+          document.getElementById('lives-impacted').textContent = stats.lives_impacted || 0;
+        } else {
+          console.error('Failed to load stats');
+        }
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    // Load blood requests
+    async function loadRequests() {
+      try {
+        const response = await fetch('/api/requests?status=open', {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const requests = await response.json();
+          displayRequests(requests);
+        } else {
+          console.error('Failed to load requests');
+        }
+      } catch (error) {
+        console.error('Error loading requests:', error);
+      }
+    }
+
+    // Display requests in the grid
+    function displayRequests(requests) {
+      const container = document.getElementById('requests-container');
+      
+      if (requests.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted">No blood requests available at this time.</p>';
+        return;
+      }
+
+      container.innerHTML = requests.map(request => {
+        const urgencyClass = request.urgency.toLowerCase();
+        const urgencyColor = {
+          'critical': 'var(--color-deep-red)',
+          'urgent': 'var(--color-orange)',
+          'routine': 'var(--color-light-green)'
+        }[urgencyClass] || 'var(--color-gray-medium)';
+
+        return `
+          <div class="request-card ${urgencyClass}" onclick="openRequestDetails(${request.id})">
+            <div class="request-card-top">
+              <div>
+                <div class="request-blood-type">${request.blood_type}</div>
+                <p style="margin: 0; color: var(--color-gray-dark); font-size: 14px;">${request.units_needed} unit${request.units_needed > 1 ? 's' : ''} needed</p>
+              </div>
+              <span class="request-badge" style="background-color: ${urgencyColor};">${request.urgency.toUpperCase()}</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0;">
+              <div>
+                <h4 style="margin-bottom: 4px;">${request.hospital_name}</h4>
+                <p style="margin: 0; color: var(--color-gray-medium); font-size: 13px;">📍 ${request.location} • ${request.distance || 'N/A'} km</p>
+              </div>
+              <button class="btn btn-primary btn-small" onclick="acceptRequest(event, ${request.id})">Accept</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function logout() {
+      if (confirm('Are you sure you want to logout?')) {
+        fetch('/api/logout', {
+          method: 'POST',
+          credentials: 'include'
+        }).then(() => {
+          window.location.href = '/home';
+        });
+      }
+    }
+
+    function openRequestDetails(id) {
+      window.location.href = `request-details.html?id=${id}`;
+    }
+
+    function acceptRequest(event, id) {
+      event.stopPropagation();
+      
+      // Check if donor is KYC verified
+      fetch('/api/profile', {
+        credentials: 'include'
+      })
+      .then(response => response.json())
+      .then(profile => {
+        if (!profile.kyc_verified) {
+          if (profile.kyc_pending) {
+            showErrorNotification('Your KYC verification is still pending. Please wait for admin approval.');
+          } else {
+            showErrorNotification('KYC verification required. Please complete verification to accept requests.');
+            setTimeout(() => {
+              startKYCVerification();
+            }, 2000);
+          }
+          return;
+        }
+        
+        // If verified, proceed with acceptance
+        document.getElementById('confirmModal').dataset.requestId = id;
+        openModal('confirmModal');
+      })
+      .catch(error => {
+        console.error('Error checking verification status:', error);
+        showErrorNotification('Unable to verify your status. Please try again.');
+      });
+    }
+
+    function completeAcceptance() {
+      const checkbox = document.getElementById('confirm-check');
+      if (checkbox.checked) {
+        const requestId = document.getElementById('confirmModal').dataset.requestId;
+        
+        fetch(`/api/requests/${requestId}/respond`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({ action: 'accept' })
+        })
+        .then(response => {
+          if (response.ok) {
+            showSuccessNotification('Request accepted! Hospital will contact you shortly.');
+            closeModal('confirmModal');
+            setTimeout(() => {
+              loadRequests(); // Refresh requests
+            }, 1500);
+          } else {
+            throw new Error('Failed to accept request');
+          }
+        })
+        .catch(error => {
+          console.error('Error accepting request:', error);
+          showErrorNotification('Failed to accept request. Please try again.');
+        });
+      } else {
+        showErrorNotification('Please confirm you are ready to donate');
+      }
+    }
+
+    // Wallet functionality
+    function openWallet() {
+      // Redirect to wallet page or open modal
+      window.location.href = 'wallet.html';
+    }
+
+    // QR Scanner functionality
+    function openQRScanner() {
+      // Open QR scanner modal
+      openModal('qrScannerModal');
+    }
+
+    // KYC Verification
+    function startKYCVerification() {
+      // Redirect to KYC verification page
+      window.location.href = '/kyc-verification';
+    }
+
+    // QR Scanner functionality
+    function startQRScan() {
+      // In a real implementation, this would access the camera and scan QR codes
+      // For demo purposes, we'll simulate a successful scan with manual QR input
+      const scannerContainer = document.getElementById('scanner-container');
+      const scanResult = document.getElementById('scan-result');
+      const scanDetails = document.getElementById('scan-details');
+
+      // Show input for QR data (simulation)
+      scannerContainer.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
+        <p style="color: var(--color-gray-dark); margin-bottom: 16px;">Paste QR code data or use camera</p>
+        <input type="text" id="qr-input" class="form-input" placeholder="Paste QR code data here..." style="margin-bottom: 12px;">
+        <button class="btn btn-primary" onclick="processQRCode()">Scan</button>
+        <button class="btn btn-secondary" onclick="resetScanner()" style="margin-left: 8px;">Cancel</button>
+      `;
+    }
+
+    async function processQRCode() {
+      try {
+        const qrInput = document.getElementById('qr-input');
+        const qrData = qrInput.value.trim();
+
+        if (!qrData) {
+          showErrorNotification('Please enter or scan a QR code');
+          return;
+        }
+
+        const scannerContainer = document.getElementById('scanner-container');
+        scannerContainer.innerHTML = `
+          <div style="font-size: 48px; margin-bottom: 16px;">🔄</div>
+          <p style="color: var(--color-gray-dark); margin: 0;">Processing QR code...</p>
+        `;
+
+        // Send QR data to backend
+        const scanResponse = await fetch('/api/qr/scan-qr', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({ qrData: qrData })
+        });
+
+        if (!scanResponse.ok) {
+          const error = await scanResponse.json();
+          throw new Error(error.error || 'Failed to scan QR code');
+        }
+
+        const scanData = await scanResponse.json();
+
+        // Display success
+        const scanResult = document.getElementById('scan-result');
+        const scanDetails = document.getElementById('scan-details');
+
+        scanDetails.innerHTML = `
+          <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+            <div>
+              <p style="margin: 0 0 8px 0;"><strong>✅ QR Code Valid</strong></p>
+              <p style="margin: 0 0 4px 0; font-size: 13px;"><strong>Transaction ID:</strong> ${scanData.transactionId}</p>
+              <p style="margin: 0 0 4px 0; font-size: 13px;"><strong>Request ID:</strong> ${scanData.requestId}</p>
+              <p style="margin: 0; font-size: 13px; color: var(--color-success);">Ready to verify donation completion</p>
+            </div>
+          </div>
+        `;
+
+        scannerContainer.style.display = 'none';
+        scanResult.style.display = 'block';
+
+        // Store for verification
+        window.currentQRTransaction = scanData;
+
+        showSuccessNotification('QR code scanned successfully!');
+      } catch (error) {
+        console.error('Process QR error:', error);
+        showErrorNotification('Error: ' + error.message);
+        resetScanner();
+      }
+    }
+
+    async function confirmCheckIn() {
+      try {
+        if (!window.currentQRTransaction) {
+          showErrorNotification('No QR transaction data found');
+          return;
+        }
+
+        const verifyButton = event.target;
+        verifyButton.disabled = true;
+        verifyButton.textContent = 'Verifying...';
+
+        // Call backend to verify donation
+        const verifyResponse = await fetch('/api/qr/verify-donation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            transactionId: window.currentQRTransaction.transactionId,
+            requestId: window.currentQRTransaction.requestId
+          })
+        });
+
+        if (!verifyResponse.ok) {
+          const error = await verifyResponse.json();
+          throw new Error(error.error || 'Failed to verify donation');
+        }
+
+        const verifyData = await verifyResponse.json();
+
+        showSuccessNotification('🎉 ' + verifyData.message);
+        
+        setTimeout(() => {
+          closeModal('qrScannerModal');
+          resetScanner();
+          loadStats(); // Refresh stats
+        }, 1500);
+      } catch (error) {
+        console.error('Verify donation error:', error);
+        showErrorNotification('Error: ' + error.message);
+        verifyButton.disabled = false;
+        verifyButton.textContent = 'Confirm Donation';
+      }
+    }
+
+    function resetScanner() {
+      const scannerContainer = document.getElementById('scanner-container');
+      const scanResult = document.getElementById('scan-result');
+
+      scannerContainer.style.display = 'block';
+      scanResult.style.display = 'none';
+
+      scannerContainer.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
+        <p style="color: var(--color-gray-dark); margin: 0;">Camera access required for QR scanning</p>
+        <button class="btn btn-primary mt-3" onclick="startQRScan()">Start Camera</button>
+      `;
+    }
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+      loadProfile();
+      loadStats();
+      loadRequests();
+    });
+  </script>
+</body>
+</html>

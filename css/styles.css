@@ -1,0 +1,1269 @@
+/* ===============================
+   DESIGN SYSTEM (GLOBAL)
+================================ */
+
+:root {
+  /* Light Mode (Default) */
+  --primary: #c62828;
+  --primary-dark: #8e0000;
+  --bg: #f9fafb;
+  --bg-secondary: #ffffff;
+  --text-dark: #1f2937;
+  --text-light: #6b7280;
+  --border: #e5e7eb;
+  --header-bg: #ffffff;
+  --card-bg: #ffffff;
+  --input-bg: #ffffff;
+  --input-border: #e5e7eb;
+  --white: #ffffff;
+  --radius: 12px;
+  --shadow: 0 10px 25px rgba(0,0,0,0.08);
+  --transition: 0.3s ease;
+}
+
+/* Dark Mode Override */
+body.dark-mode {
+  --primary: #ef4444;
+  --primary-dark: #dc2626;
+  --bg: #0f172a;
+  --bg-secondary: #1e293b;
+  --text-dark: #f1f5f9;
+  --text-light: #cbd5e1;
+  --border: #334155;
+  --header-bg: #1e293b;
+  --card-bg: #1e293b;
+  --input-bg: #0f172a;
+  --input-border: #334155;
+  --white: #1e293b;
+  --shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text-dark);
+  transition: background-color var(--transition), color var(--transition);
+}
+
+/* ===============================
+   REUSABLE COMPONENTS
+================================ */
+
+/* Cards (used everywhere) */
+.card {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: background-color var(--transition), box-shadow var(--transition);
+}
+
+/* Buttons */
+.btn {
+  padding: 12px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+/* Inputs */
+.input {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text-dark);
+  margin-bottom: 15px;
+  transition: border-color var(--transition), background-color var(--transition), color var(--transition);
+}
+
+.input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+/* ===============================
+   LANDING PAGE (index.html)
+================================ */
+
+.hero {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.hero h1 {
+  font-size: 36px;
+  color: var(--primary);
+}
+
+.hero p {
+  color: var(--text-light);
+  margin: 10px 0 20px;
+}
+
+/* ===============================
+   AUTH PAGES
+================================ */
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.auth-box {
+  width: 100%;
+  max-width: 400px;
+}
+
+.auth-box h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* ===============================
+   DASHBOARD (Donor & Hospital)
+================================ */
+
+.dashboard {
+  display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 230px;
+  background: var(--primary);
+  color: white;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.sidebar a {
+  display: block;
+  color: white;
+  padding: 10px;
+  text-decoration: none;
+  border-radius: var(--radius);
+}
+
+.sidebar a:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+/* Main */
+.main {
+  flex: 1;
+  padding: 25px;
+}
+
+/* ===============================
+   REQUEST LIST
+================================ */
+
+.request-card {
+  margin-bottom: 20px;
+}
+
+.request-card h3 {
+  margin: 0;
+}
+
+.request-card p {
+  color: var(--text-light);
+}
+
+/* ===============================
+   BADGES
+================================ */
+
+.badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.critical {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.urgent {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.routine {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* ===============================
+   QR PAGE
+================================ */
+
+.qr-box {
+  width: 250px;
+  height: 250px;
+  border: 2px dashed var(--primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 30px auto;
+}
+
+/* ===============================
+   WALLET
+================================ */
+
+.wallet-balance {
+  font-size: 26px;
+  color: var(--primary);
+  font-weight: bold;
+}
+
+.voucher {
+  border-bottom: 1px solid var(--border);
+  padding: 10px 0;
+}
+
+/* ===============================
+   KYC PAGE
+================================ */
+
+.kyc-form {
+  max-width: 500px;
+  margin: auto;
+}
+
+/* ===============================
+   SPACING UTILITIES
+================================ */
+
+/* Padding utilities */
+.py-5 {
+  padding-top: 48px;
+  padding-bottom: 48px;
+}
+
+.py-4 {
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+
+.py-3 {
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+/* Margin utilities */
+.mb-5 {
+  margin-bottom: 48px;
+}
+
+.mb-4 {
+  margin-bottom: 32px;
+}
+
+.mb-3 {
+  margin-bottom: 24px;
+}
+
+.mt-5 {
+  margin-top: 48px;
+}
+
+.mt-4 {
+  margin-top: 32px;
+}
+
+.mt-3 {
+  margin-top: 24px;
+}
+
+/* ===============================
+   TEXT UTILITIES
+================================ */
+
+.text-center {
+  text-align: center;
+}
+
+.text-large {
+  font-size: 18px;
+}
+
+.text-success {
+  color: #16a34a;
+}
+
+/* ===============================
+   LAYOUT UTILITIES
+================================ */
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.col {
+  width: 100%;
+}
+
+.col-md-6 {
+  grid-column: span 1;
+}
+
+@media (min-width: 768px) {
+  .col-md-6 {
+    grid-column: span 1;
+  }
+}
+
+/* ===============================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 768px) {
+  .dashboard {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+}
+
+/* ===============================
+   ALERTS
+================================ */
+
+.alert {
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.alert-success {
+  background-color: #f0fdf4;
+  border-left-color: #16a34a;
+  color: #166534;
+}
+
+.alert-error {
+  background-color: #fef2f2;
+  border-left-color: #dc2626;
+  color: #b91c1c;
+}
+
+.alert-warning {
+  background-color: #fffbeb;
+  border-left-color: #f59e0b;
+  color: #b45309;
+}
+
+.alert-info {
+  background-color: #eff6ff;
+  border-left-color: #0284c7;
+  color: #0c4a6e;
+}
+
+.alert-icon {
+  margin-right: 8px;
+  font-weight: bold;
+}
+
+.alert-content {
+  margin: 0;
+}
+
+.alert-content p {
+  margin: 0;
+}
+
+/* ===============================
+   FORM STYLES
+================================ */
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-dark);
+  font-size: 14px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.1);
+}
+
+.form-input.is-invalid {
+  border-color: #dc2626;
+}
+
+.form-error {
+  color: #b91c1c;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.form-hint {
+  color: var(--text-light);
+  font-size: 12px;
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+.form-check-input {
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.form-check-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.form-check-label a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.form-check-label a:hover {
+  text-decoration: underline;
+}
+
+/* ===============================
+   BUTTON SIZES
+================================ */
+
+.btn-large {
+  padding: 14px 28px;
+  font-size: 16px;
+  width: 100%;
+}
+
+.btn-small {
+  padding: 8px 16px;
+  font-size: 12px;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+}
+
+.btn-outline:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-secondary {
+  background: var(--text-light);
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: var(--text-dark);
+}
+
+/* ===============================
+   CONTAINERS & SECTIONS
+================================ */
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.container-sm {
+  max-width: 500px;
+}
+
+.card-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-header h2,
+.card-header h3 {
+  margin-top: 0;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+/* Text utilities */
+.text-center {
+  text-align: center;
+}
+
+.text-muted {
+  color: var(--text-light);
+}
+
+.text-large {
+  font-size: 18px;
+}
+
+.text-success {
+  color: #16a34a;
+}
+
+/* Margin utilities */
+.mt-1 { margin-top: 8px; }
+.mt-2 { margin-top: 12px; }
+.mt-3 { margin-top: 16px; }
+.mt-4 { margin-top: 24px; }
+.mt-5 { margin-top: 48px; }
+
+.mb-1 { margin-bottom: 8px; }
+.mb-2 { margin-bottom: 12px; }
+.mb-3 { margin-bottom: 16px; }
+.mb-4 { margin-bottom: 24px; }
+.mb-5 { margin-bottom: 48px; }
+
+/* Padding utilities */
+.p-3 { padding: 16px; }
+.p-4 { padding: 24px; }
+.p-5 { padding: 48px; }
+
+.py-3 { padding-top: 16px; padding-bottom: 16px; }
+.py-4 { padding-top: 24px; padding-bottom: 24px; }
+
+.px-3 { padding-left: 16px; padding-right: 16px; }
+.px-4 { padding-left: 24px; padding-right: 24px; }
+
+/* ===============================
+   PAGE BANNER
+================================ */
+
+.page-banner {
+  background: linear-gradient(135deg, rgba(198, 40, 40, 0.8), rgba(198, 40, 40, 0.6)), 
+              var(--page-banner);
+  background-size: cover;
+  background-position: center;
+  color: white;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.page-banner h2 {
+  margin: 0;
+  font-size: 28px;
+}
+
+/* ===============================
+   HEADER & FOOTER
+================================ */
+
+.header {
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 0;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  gap: 8px;
+}
+
+.logo-img {
+  height: 40px;
+  width: auto;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.nav {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.nav-link {
+  color: var(--text-dark);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color var(--transition);
+}
+
+.nav-link:hover {
+  color: var(--primary);
+}
+
+/* Theme Toggle Button */
+#theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  font-size: 18px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  color: var(--text-dark);
+}
+
+#theme-toggle:hover {
+  background: var(--bg-secondary);
+  border-color: var(--primary);
+  transform: scale(1.1);
+}
+
+#theme-toggle:active {
+  transform: scale(0.95);
+}
+
+.burger-menu {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.footer {
+  background: var(--bg-secondary);
+  color: var(--text-dark);
+  padding: 40px 0;
+  margin-top: 60px;
+  border-top: 1px solid var(--border);
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.footer-section h4 {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-links a {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.footer-links a:hover {
+  color: white;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 20px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
+/* ===============================
+   AUTH PAGE STYLE
+================================ */
+
+.auth-page {
+  background: var(--bg);
+}
+
+/* ===============================
+   MOBILE RESPONSIVE
+================================ */
+
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .nav {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .nav.active {
+    display: flex;
+  }
+
+  .burger-menu {
+    display: block;
+  }
+
+  .container-sm {
+    padding: 0 16px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .page-banner {
+    padding: 40px 16px;
+  }
+
+  .page-banner h2 {
+    font-size: 20px;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===============================
+   KYC VERIFICATION STYLES
+================================ */
+
+.kyc-verification-page {
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  min-height: 100vh;
+}
+
+.kyc-container {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 30px;
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.kyc-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.kyc-card-header {
+  background: linear-gradient(135deg, #c62828 0%, #8e0000 100%);
+  color: white;
+  padding: 40px;
+  text-align: center;
+}
+
+.kyc-card-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+}
+
+.kyc-card-header p {
+  font-size: 16px;
+  margin: 0;
+  opacity: 0.95;
+}
+
+.kyc-card-body {
+  padding: 40px;
+}
+
+/* Step Indicator */
+.kyc-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 40px;
+  gap: 20px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.step-number {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 8px;
+  transition: all 0.3s;
+}
+
+.step.active .step-number {
+  background: #c62828;
+  color: white;
+}
+
+.step-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-align: center;
+}
+
+.step.active .step-label {
+  color: #c62828;
+}
+
+.step-divider {
+  flex: 1;
+  height: 2px;
+  background: #e5e7eb;
+  margin: 22px 0;
+}
+
+/* KYC Form */
+.kyc-form {
+  width: 100%;
+}
+
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.form-select:focus {
+  border-color: #c62828;
+}
+
+/* File Upload */
+.file-upload-container {
+  margin-bottom: 16px;
+}
+
+.file-upload-area {
+  border: 2px dashed #e5e7eb;
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.file-upload-area:hover {
+  border-color: #c62828;
+  background: rgba(198, 40, 40, 0.02);
+}
+
+.file-upload-area.drag-over {
+  border-color: #c62828;
+  background: rgba(198, 40, 40, 0.05);
+}
+
+.upload-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.upload-text {
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.upload-hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* File Preview */
+.file-preview {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.preview-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.preview-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #d1fae5;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.preview-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  word-break: break-all;
+}
+
+.preview-remove {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.preview-remove:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Label Required */
+.label-required {
+  color: #dc2626;
+  margin-right: 4px;
+}
+
+/* Info Box */
+.info-box {
+  display: flex;
+  gap: 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 24px 0;
+}
+
+.info-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.info-content h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e40af;
+}
+
+.info-content p {
+  margin: 0;
+  font-size: 13px;
+  color: #0c4a6e;
+}
+
+/* Buttons */
+.btn-large {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.btn-loader {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+/* Status Messages */
+.success-message,
+.pending-message,
+.rejected-message {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.success-icon,
+.pending-icon,
+.rejected-icon {
+  font-size: 60px;
+  margin-bottom: 16px;
+  display: inline-block;
+}
+
+.success-message h3,
+.pending-message h3,
+.rejected-message h3 {
+  color: #1f2937;
+  font-size: 24px;
+  margin: 0 0 12px 0;
+}
+
+.success-message p,
+.pending-message p,
+.rejected-message p {
+  color: #6b7280;
+  font-size: 15px;
+  margin: 8px 0;
+}
+
+/* Side Panel */
+.kyc-side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.benefits-card,
+.help-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.benefits-card h3,
+.help-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #1f2937;
+}
+
+.benefits-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.benefits-list li {
+  font-size: 14px;
+  color: #4b5563;
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+
+.benefits-list li:last-child {
+  margin-bottom: 0;
+}
+
+.help-card p {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .kyc-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 30px 20px;
+  }
+
+  .kyc-card-header {
+    padding: 30px;
+  }
+
+  .kyc-card-header h1 {
+    font-size: 24px;
+  }
+
+  .kyc-card-body {
+    padding: 30px;
+  }
+}
+
+@media (max-width: 640px) {
+  .kyc-container {
+    padding: 20px 15px;
+  }
+
+  .kyc-card-header {
+    padding: 24px;
+  }
+
+  .kyc-card-header h1 {
+    font-size: 20px;
+  }
+
+  .kyc-card-header p {
+    font-size: 14px;
+  }
+
+  .kyc-card-body {
+    padding: 20px;
+  }
+
+  .kyc-steps {
+    gap: 10px;
+    margin-bottom: 30px;
+  }
+
+  .step-number {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .step-label {
+    font-size: 11px;
+  }
+
+  .file-upload-area {
+    padding: 30px 15px;
+  }
+
+  .upload-icon {
+    font-size: 32px;
+  }
+
+  .upload-text {
+    font-size: 14px;
+  }
+
+  .upload-hint {
+    font-size: 11px;
+  }
+}
+
+/* ===============================
+   KYC STATUS ALERT (Dashboard)
+================================ */
+
+.kyc-status-alert {
+  margin-bottom: 20px;
+}
+
+.kyc-status-alert .alert {
+  padding: 16px 20px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.kyc-status-alert .alert button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.3s;
+}
+
+.kyc-status-alert .alert-success button {
+  background: #059669;
+  color: white;
+}
+
+.kyc-status-alert .alert-success button:hover {
+  background: #047857;
+}
+
+.kyc-status-alert .alert-warning button {
+  background: #d97706;
+  color: white;
+}
+
+.kyc-status-alert .alert-warning button:hover {
+  background: #b45309;
+}
+
+.kyc-status-alert .alert-error button {
+  background: #dc2626;
+  color: white;
+}
+
+.kyc-status-alert .alert-error button:hover {
+  background: #b91c1c;
+}
+
+.kyc-status-alert .alert-info button {
+  background: #0284c7;
+  color: white;
+}
+
+.kyc-status-alert .alert-info button:hover {
+  background: #0369a1;
+}
+

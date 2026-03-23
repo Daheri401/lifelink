@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KYC Verification - LifeLink</title>
+  <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body class="kyc-verification-page">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/home" class="logo">
+          <img src="../New%20folder/logo.png" alt="LifeLink logo" class="logo-img">
+          <span class="logo-text">LifeLink</span>
+        </a>
+        <nav class="nav">
+          <a href="/home" class="nav-link">Home</a>
+          <a href="donor-dashboard.html" class="nav-link">Dashboard</a>
+          <a href="/home" class="nav-link">Help</a>
+          <button id="theme-toggle" title="Toggle dark/light theme">🌙</button>
+          <div class="nav-button">
+            <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
+          </div>
+        </nav>
+        <button class="burger-menu" aria-label="Toggle menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div class="container">
+    <div class="kyc-container">
+      <!-- KYC FORM CARD -->
+      <div class="kyc-card">
+        <div class="kyc-card-header">
+          <h1>Complete Your Profile</h1>
+          <p>Let's verify your identity so you can help save lives</p>
+        </div>
+
+        <div class="kyc-card-body">
+          <!-- STEP INDICATOR -->
+          <div class="kyc-steps">
+            <div class="step active">
+              <div class="step-number">1</div>
+              <div class="step-label">Identity</div>
+            </div>
+            <div class="step-divider"></div>
+            <div class="step">
+              <div class="step-number">2</div>
+              <div class="step-label">Blood Type</div>
+            </div>
+            <div class="step-divider"></div>
+            <div class="step">
+              <div class="step-number">3</div>
+              <div class="step-label">Submit</div>
+            </div>
+          </div>
+
+          <!-- ALERT MESSAGE -->
+          <div id="kyc-alert" class="alert" style="display: none;"></div>
+
+          <!-- KYC FORM -->
+          <form id="kyc-form" class="kyc-form">
+            <!-- ID CARD UPLOAD SECTION -->
+            <div class="form-group">
+              <label for="id-card" class="form-label">
+                <span class="label-required">*</span>
+                Upload ID Card / Passport
+              </label>
+              <div class="file-upload-container">
+                <div class="file-upload-area" onclick="document.getElementById('id-card').click()">
+                  <div class="upload-icon">📄</div>
+                  <p class="upload-text">Drag and drop your ID card or click to browse</p>
+                  <p class="upload-hint">Accepted: JPG, PNG, PDF (Max 5MB)</p>
+                </div>
+                <input 
+                  type="file" 
+                  id="id-card" 
+                  name="idCard" 
+                  accept=".jpg,.jpeg,.png,.pdf" 
+                  style="display: none;"
+                  required
+                >
+              </div>
+              <div id="file-preview" class="file-preview" style="display: none;">
+                <div class="preview-item">
+                  <span class="preview-icon">✓</span>
+                  <span class="preview-name" id="file-name"></span>
+                  <button type="button" class="preview-remove" onclick="removeFile()">✕</button>
+                </div>
+              </div>
+              <div class="form-error" id="id-card-error"></div>
+            </div>
+
+            <!-- BLOOD GROUP SECTION -->
+            <div class="form-group">
+              <label for="blood-group" class="form-label">
+                <span class="label-required">*</span>
+                Blood Group
+              </label>
+              <select id="blood-group" name="bloodGroup" class="form-input form-select" required>
+                <option value="">-- Select your blood group --</option>
+                <optgroup label="Positive">
+                  <option value="O+">O+</option>
+                  <option value="A+">A+</option>
+                  <option value="B+">B+</option>
+                  <option value="AB+">AB+</option>
+                </optgroup>
+                <optgroup label="Negative">
+                  <option value="O-">O-</option>
+                  <option value="A-">A-</option>
+                  <option value="B-">B-</option>
+                  <option value="AB-">AB-</option>
+                </optgroup>
+              </select>
+              <div class="form-error" id="blood-group-error"></div>
+            </div>
+
+            <!-- INFO BOX -->
+            <div class="info-box">
+              <div class="info-icon">ℹ️</div>
+              <div class="info-content">
+                <h4>Why we need this</h4>
+                <p>Verification helps us ensure the safety and reliability of our blood donation network. Your information is secure and encrypted.</p>
+              </div>
+            </div>
+
+            <!-- SUBMIT BUTTON -->
+            <div class="form-group" style="margin-top: 30px;">
+              <button type="submit" class="btn btn-large" id="kyc-submit-btn">
+                <span class="btn-text">Submit for Verification</span>
+                <span class="btn-loader" style="display: none;">⏳ Processing...</span>
+              </button>
+              <p class="form-hint" style="margin-top: 15px; text-align: center;">
+                Admin approval usually takes 24 hours. You'll be notified once verified.
+              </p>
+            </div>
+          </form>
+
+          <!-- ALREADY VERIFIED MESSAGE -->
+          <div id="already-verified" class="success-message" style="display: none;">
+            <div class="success-icon">✓</div>
+            <h3>You're Already Verified!</h3>
+            <p>Your KYC verification has been completed. You can now accept blood donation requests.</p>
+            <a href="donor-dashboard.html" class="btn btn-primary" style="margin-top: 15px; display: inline-block;">
+              Go to Dashboard
+            </a>
+          </div>
+
+          <!-- PENDING VERIFICATION MESSAGE -->
+          <div id="pending-verification" class="pending-message" style="display: none;">
+            <div class="pending-icon">⏳</div>
+            <h3>Verification In Progress</h3>
+            <p>Your KYC verification is under review by our admin team.</p>
+            <p style="margin-top: 10px; color: var(--color-gray-dark); font-size: 14px;">
+              We'll notify you within 24 hours once the verification is complete.
+            </p>
+            <a href="donor-dashboard.html" class="btn btn-outline" style="margin-top: 15px; display: inline-block;">
+              Back to Dashboard
+            </a>
+          </div>
+
+          <!-- REJECTED VERIFICATION MESSAGE -->
+          <div id="rejected-verification" class="rejected-message" style="display: none;">
+            <div class="rejected-icon">✕</div>
+            <h3>Verification Could Not Be Processed</h3>
+            <p id="rejection-reason" style="margin: 10px 0;"></p>
+            <p style="margin-top: 10px; color: var(--color-gray-dark); font-size: 14px;">
+              Please resubmit with clearer documents or contact support.
+            </p>
+            <button type="button" class="btn btn-primary" style="margin-top: 15px;" onclick="resetKYCForm()">
+              Resubmit KYC
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIDE PANEL (Benefits) -->
+      <div class="kyc-side-panel">
+        <div class="benefits-card">
+          <h3>Benefits After Verification</h3>
+          <ul class="benefits-list">
+            <li>✓ Accept blood donation requests</li>
+            <li>✓ Earn donor rewards & points</li>
+            <li>✓ Access donation history</li>
+            <li>✓ Get donation certificates</li>
+            <li>✓ Connect with hospitals</li>
+            <li>✓ Emergency notification alerts</li>
+          </ul>
+        </div>
+
+        <div class="help-card">
+          <h3>Need Help?</h3>
+          <p>If you have questions about the verification process, contact our support team:</p>
+          <p style="margin-top: 10px;">
+            <strong>📧 support@lifelink.com</strong><br>
+            <strong>📞 +237 XXX-XXX-XXX</strong><br>
+            <strong>⏰ 9 AM - 6 PM (Mon-Fri)</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>LifeLink</h4>
+          <p>Connecting blood donors with those in need</p>
+        </div>
+        <div class="footer-section">
+          <h4>Quick Links</h4>
+          <a href="/home">Home</a>
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2024 LifeLink. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../js/script.js"></script>
+  <script>
+    // ============ KYC FORM INITIALIZATION ============
+    document.addEventListener('DOMContentLoaded', function() {
+      checkKYCStatus();
+      initializeKYCForm();
+      setupFileUpload();
+    });
+
+    // ============ CHECK KYC STATUS ON PAGE LOAD ============
+    function checkKYCStatus() {
+      const phone = localStorage.getItem('userPhone');
+      
+      if (!phone) {
+        window.location.href = '/donor-signup';
+        return;
+      }
+
+      fetch(`/api/kyc/status/${phone}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.verified) {
+            showVerifiedMessage();
+          } else if (data.pending) {
+            showPendingMessage();
+          } else if (data.status === 'rejected') {
+            showRejectedMessage(data.rejectionReason);
+          }
+        })
+        .catch(error => console.error('Status check error:', error));
+    }
+
+    // ============ FILE UPLOAD HANDLING ============
+    function setupFileUpload() {
+      const fileInput = document.getElementById('id-card');
+      const uploadArea = document.querySelector('.file-upload-area');
+
+      // Click to upload
+      uploadArea.addEventListener('click', (e) => {
+        if (e.target.closest('.preview-remove')) return;
+        fileInput.click();
+      });
+
+      // Drag and drop
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+      });
+
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('drag-over');
+      });
+
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          fileInput.files = files;
+          displayFilePreview(files[0]);
+        }
+      });
+
+      // File input change
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          const file = e.target.files[0];
+          
+          // Validate file size (5MB)
+          if (file.size > 5 * 1024 * 1024) {
+            showKYCAlert('File size must not exceed 5MB', 'error');
+            fileInput.value = '';
+            return;
+          }
+
+          displayFilePreview(file);
+        }
+      });
+    }
+
+    function displayFilePreview(file) {
+      const fileName = file.name;
+      const fileSize = (file.size / 1024).toFixed(2);
+      
+      document.getElementById('file-name').textContent = 
+        `${fileName} (${fileSize}KB)`;
+      document.getElementById('file-preview').style.display = 'block';
+      document.querySelector('.file-upload-area').style.display = 'none';
+    }
+
+    function removeFile() {
+      document.getElementById('id-card').value = '';
+      document.getElementById('file-preview').style.display = 'none';
+      document.querySelector('.file-upload-area').style.display = 'block';
+    }
+
+    // ============ KYC FORM SUBMISSION ============
+    function initializeKYCForm() {
+      const form = document.getElementById('kyc-form');
+      
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          submitKYCForm();
+        });
+      }
+    }
+
+    function submitKYCForm() {
+      const phone = localStorage.getItem('userPhone');
+      const bloodGroup = document.getElementById('blood-group').value;
+      const idCardFile = document.getElementById('id-card').files[0];
+      const submitBtn = document.getElementById('kyc-submit-btn');
+
+      // Validation
+      if (!bloodGroup) {
+        showKYCAlert('Please select your blood group', 'error');
+        return;
+      }
+
+      if (!idCardFile) {
+        showKYCAlert('Please upload your ID card', 'error');
+        return;
+      }
+
+      // Show loading state
+      submitBtn.disabled = true;
+      submitBtn.querySelector('.btn-text').style.display = 'none';
+      submitBtn.querySelector('.btn-loader').style.display = 'inline';
+
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('phone', phone);
+      formData.append('bloodGroup', bloodGroup);
+      formData.append('idCard', idCardFile);
+
+      // Submit to backend
+      fetch('/api/kyc/submit', {
+        method: 'POST',
+        body: formData
+        // Don't set Content-Type header - let browser set it with boundary
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showKYCAlert('✓ KYC submitted successfully! Admin review in progress.', 'success');
+          
+          // Store KYC status
+          localStorage.setItem('kycStatus', 'pending');
+          
+          // Redirect to dashboard after 2 seconds
+          setTimeout(() => {
+            window.location.href = '/donor-dashboard';
+          }, 2000);
+        } else {
+          showKYCAlert(data.message || 'KYC submission failed', 'error');
+        }
+      })
+      .catch(error => {
+        console.error('KYC submission error:', error);
+        showKYCAlert('Failed to submit KYC. Please try again.', 'error');
+      })
+      .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.querySelector('.btn-text').style.display = 'inline';
+        submitBtn.querySelector('.btn-loader').style.display = 'none';
+      });
+    }
+
+    // ============ KYC STATUS MESSAGES ============
+    function showVerifiedMessage() {
+      document.getElementById('kyc-form').style.display = 'none';
+      document.getElementById('already-verified').style.display = 'block';
+    }
+
+    function showPendingMessage() {
+      document.getElementById('kyc-form').style.display = 'none';
+      document.getElementById('pending-verification').style.display = 'block';
+    }
+
+    function showRejectedMessage(reason) {
+      document.getElementById('kyc-form').style.display = 'none';
+      document.getElementById('rejected-verification').style.display = 'block';
+      document.getElementById('rejection-reason').textContent = 
+        reason || 'Your documents did not meet our verification requirements.';
+    }
+
+    function resetKYCForm() {
+      document.getElementById('kyc-form').reset();
+      document.getElementById('id-card-error').textContent = '';
+      document.getElementById('blood-group-error').textContent = '';
+      document.getElementById('file-preview').style.display = 'none';
+      document.querySelector('.file-upload-area').style.display = 'block';
+      document.getElementById('rejected-verification').style.display = 'none';
+      document.getElementById('kyc-form').style.display = 'block';
+    }
+
+    // ============ ALERT DISPLAY ============
+    function showKYCAlert(message, type) {
+      const alert = document.getElementById('kyc-alert');
+      alert.textContent = message;
+      alert.className = `alert alert-${type}`;
+      alert.style.display = 'block';
+      
+      if (type === 'success') {
+        setTimeout(() => {
+          alert.style.display = 'none';
+        }, 3000);
+      }
+    }
+
+    // ============ LOGOUT FUNCTION ============
+    function logout() {
+      localStorage.removeItem('userPhone');
+      localStorage.removeItem('kycStatus');
+      window.location.href = '/home';
+    }
+  </script>
+</body>
+</html>
