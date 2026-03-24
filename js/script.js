@@ -638,7 +638,14 @@ async function loadHospitalVerificationStatus() {
     const response = await fetch('/api/profile', {
       credentials: 'include'
     });
-    
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      if (response.redirected || response.url.includes('/login')) {
+        window.location.href = '/hospital-login';
+      }
+      return;
+    }
+
     if (response.ok) {
       const hospitalData = await response.json();
       const statusElement = document.getElementById('verification-content');
@@ -714,7 +721,14 @@ async function loadHospitalStats() {
     const response = await fetch('/api/hospital/stats', {
       credentials: 'include'
     });
-    
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      if (response.redirected || response.url.includes('/login')) {
+        window.location.href = '/hospital-login';
+      }
+      return;
+    }
+
     if (response.ok) {
       const stats = await response.json();
       updateHospitalStats(stats);
@@ -1090,8 +1104,9 @@ async function handleHospitalSignup(e) {
 async function handleDonorLogin(e) {
   e.preventDefault();
   
-  const identifier = document.getElementById('login-identifier')?.value;
+  const identifier = (document.getElementById('login-identifier')?.value || '').trim();
   const password = document.getElementById('password')?.value;
+  const submitBtn = e.target.querySelector('button[type="submit"]');
   
   if (!identifier || !password) {
     showErrorNotification('Please fill in all fields');
@@ -1099,17 +1114,23 @@ async function handleDonorLogin(e) {
   }
   
   try {
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+    }
+
     const response = await fetch('/api/login/donor', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ identifier, password })
     });
     
     const result = await response.json();
     
-    if (response.ok) {
+    if (response.ok && result.success) {
       showSuccessNotification('Login successful');
       setTimeout(() => {
         window.location.href = result.redirect || '/donor-dashboard';
@@ -1120,14 +1141,20 @@ async function handleDonorLogin(e) {
   } catch (error) {
     console.error('Error logging in:', error);
     showErrorNotification('Login failed. Please try again.');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Login';
+    }
   }
 }
 
 async function handleHospitalLogin(e) {
   e.preventDefault();
   
-  const identifier = document.getElementById('login-identifier')?.value;
+  const identifier = (document.getElementById('login-identifier')?.value || '').trim();
   const password = document.getElementById('password')?.value;
+  const submitBtn = e.target.querySelector('button[type="submit"]');
   
   if (!identifier || !password) {
     showErrorNotification('Please fill in all fields');
@@ -1135,17 +1162,23 @@ async function handleHospitalLogin(e) {
   }
   
   try {
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+    }
+
     const response = await fetch('/api/login/hospital', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ identifier, password })
     });
     
     const result = await response.json();
     
-    if (response.ok) {
+    if (response.ok && result.success) {
       showSuccessNotification('Login successful');
       setTimeout(() => {
         window.location.href = result.redirect || '/hospital-dashboard';
@@ -1156,6 +1189,11 @@ async function handleHospitalLogin(e) {
   } catch (error) {
     console.error('Error logging in:', error);
     showErrorNotification('Login failed. Please try again.');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Login';
+    }
   }
 }
 
@@ -1210,7 +1248,7 @@ function handleOtpVerification(e) {
   // Redirect to dashboard in real app
 }
 
-function handlePostRequest(e) {
+function handlePostRequestLegacy(e) {
   e.preventDefault();
   
   const bloodType = document.getElementById('blood-type')?.value;
@@ -1375,12 +1413,12 @@ async function handleDonorSignup(e) {
 
     // Validation
     if (!userData.name || !userData.phone || !userData.password) {
-      showAlert(alertDiv, '❌ Please fill in all required fields', 'error');
+      showAuthAlert(alertDiv, '❌ Please fill in all required fields', 'error');
       return;
     }
 
     if (userData.password.length < 6) {
-      showAlert(alertDiv, '❌ Password must be at least 6 characters', 'error');
+      showAuthAlert(alertDiv, '❌ Password must be at least 6 characters', 'error');
       return;
     }
 
@@ -1410,7 +1448,7 @@ async function handleDonorSignup(e) {
       currentPhone = userData.phone;
       currentRole = 'donor';
       
-      showAlert(alertDiv, `✅ ${data.message}`, 'success');
+      showAuthAlert(alertDiv, `✅ ${data.message}`, 'success');
       
       // Hide signup form, show OTP section
       setTimeout(() => {
@@ -1422,10 +1460,10 @@ async function handleDonorSignup(e) {
         startResendTimer();
       }, 1500);
     } else {
-      showAlert(alertDiv, `❌ ${data.message}`, 'error');
+      showAuthAlert(alertDiv, `❌ ${data.message}`, 'error');
     }
   } catch (error) {
-    showAlert(alertDiv, `❌ Error: ${error.message}`, 'error');
+    showAuthAlert(alertDiv, `❌ Error: ${error.message}`, 'error');
     console.error('Signup error:', error);
   } finally {
     submitBtn.disabled = false;
@@ -1452,12 +1490,12 @@ async function handleHospitalSignup(e) {
 
     // Validation
     if (!userData.name || !userData.phone || !userData.password) {
-      showAlert(alertDiv, '❌ Please fill in all required fields', 'error');
+      showAuthAlert(alertDiv, '❌ Please fill in all required fields', 'error');
       return;
     }
 
     if (userData.password.length < 6) {
-      showAlert(alertDiv, '❌ Password must be at least 6 characters', 'error');
+      showAuthAlert(alertDiv, '❌ Password must be at least 6 characters', 'error');
       return;
     }
 
@@ -1487,7 +1525,7 @@ async function handleHospitalSignup(e) {
       currentPhone = userData.phone;
       currentRole = 'hospital';
       
-      showAlert(alertDiv, `✅ ${data.message}`, 'success');
+      showAuthAlert(alertDiv, `✅ ${data.message}`, 'success');
       
       // Hide signup form, show OTP section
       setTimeout(() => {
@@ -1499,10 +1537,10 @@ async function handleHospitalSignup(e) {
         startResendTimer();
       }, 1500);
     } else {
-      showAlert(alertDiv, `❌ ${data.message}`, 'error');
+      showAuthAlert(alertDiv, `❌ ${data.message}`, 'error');
     }
   } catch (error) {
-    showAlert(alertDiv, `❌ Error: ${error.message}`, 'error');
+    showAuthAlert(alertDiv, `❌ Error: ${error.message}`, 'error');
     console.error('Signup error:', error);
   } finally {
     submitBtn.disabled = false;
@@ -1550,7 +1588,7 @@ async function handleOtpVerification(e) {
   
   try {
     if (!otp || otp.length !== 6) {
-      showAlert(alertDiv, '❌ Please enter a valid 6-digit code', 'error');
+      showAuthAlert(alertDiv, '❌ Please enter a valid 6-digit code', 'error');
       return;
     }
 
@@ -1564,6 +1602,7 @@ async function handleOtpVerification(e) {
       headers: {
         'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({
         phone: currentPhone,
         otp: otp
@@ -1573,29 +1612,27 @@ async function handleOtpVerification(e) {
     const data = await response.json();
 
     if (data.success) {
-      showAlert(alertDiv, `✅ ${data.message}`, 'success');
+      showAuthAlert(alertDiv, `✅ ${data.message}`, 'success');
       
       console.log('✅ Registration successful!', data);
       
       // Redirect after 2 seconds
       setTimeout(() => {
-        if (currentRole === 'donor') {
-          window.location.href = '/donor-dashboard';
-        } else if (currentRole === 'hospital') {
-          window.location.href = '/pages/hospital-dashboard.html';
-        }
+        const role = data.role || currentRole;
+        const redirectPath = data.redirect || (role === 'hospital' ? '/hospital-dashboard' : '/donor-dashboard');
+        window.location.href = redirectPath;
       }, 2000);
     } else {
-      showAlert(alertDiv, `❌ ${data.message}`, 'error');
+      showAuthAlert(alertDiv, `❌ ${data.message}`, 'error');
       
       // Show attempts left if available
       if (data.attemptsLeft !== undefined) {
         const msg = `⚠️ ${data.attemptsLeft} attempt${data.attemptsLeft === 1 ? '' : 's'} remaining`;
-        showAlert(alertDiv, msg, 'warning');
+        showAuthAlert(alertDiv, msg, 'warning');
       }
     }
   } catch (error) {
-    showAlert(alertDiv, `❌ Verification error: ${error.message}`, 'error');
+    showAuthAlert(alertDiv, `❌ Verification error: ${error.message}`, 'error');
     console.error('OTP verification error:', error);
   } finally {
     submitBtn.disabled = false;
@@ -1650,18 +1687,18 @@ async function handleResendOtp(e) {
     const data = await response.json();
 
     if (data.success) {
-      showAlert(alertDiv, '✅ OTP resent successfully!', 'success');
+      showAuthAlert(alertDiv, '✅ OTP resent successfully!', 'success');
       startResendTimer();
     } else {
-      showAlert(alertDiv, `❌ ${data.message}`, 'error');
+      showAuthAlert(alertDiv, `❌ ${data.message}`, 'error');
     }
   } catch (error) {
-    showAlert(alertDiv, `❌ Resend error: ${error.message}`, 'error');
+    showAuthAlert(alertDiv, `❌ Resend error: ${error.message}`, 'error');
   }
 }
 
 // Show alert message
-function showAlert(alertDiv, message, type) {
+function showAuthAlert(alertDiv, message, type) {
   if (!alertDiv) return;
   
   alertDiv.textContent = message;

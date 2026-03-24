@@ -1,6 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const mysql = require('mysql2/promise');
+
+const dbConfig = {
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'lifelink'
+};
+
+async function getConnection() {
+  return mysql.createConnection(dbConfig);
+}
 
 // In-memory OTP storage (for development - no database needed yet)
 const otpStore = {}; // Format: { "phone": { code: "123456", expiry: timestamp, attempts: 0, verified: false } }
@@ -12,7 +24,8 @@ function generateOTP() {
 }
 
 // POST /api/auth/register - Initial registration & OTP generation
-router.post('/auth/register', (req, res) => {
+router.post('/auth/register', async (req, res) => {
+  let connection;
   try {
     const { name, email, phone, password, role, location } = req.body;
 
@@ -25,9 +38,18 @@ router.post('/auth/register', (req, res) => {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
     }
 
-    // Check if phone already registered
+    // Check if phone has a pending OTP already
     if (otpStore[phone]) {
       return res.status(409).json({ success: false, message: 'Phone already in use' });
+    }
+
+    connection = await getConnection();
+    const [existingUsers] = await connection.execute(
+      'SELECT user_id FROM users WHERE phone = ? OR email = ? LIMIT 1',
+      [phone, email || '']
+    );
+    if (existingUsers.length > 0) {
+      return res.status(409).json({ success: false, message: 'User already registered. Please log in.' });
     }
 
     // Generate OTP
@@ -70,11 +92,16 @@ router.post('/auth/register', (req, res) => {
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ success: false, message: 'Registration failed' });
+  } finally {
+    if (connection) {
+      await connection.end().catch(() => {});
+    }
   }
 });
 
 // POST /api/auth/verify-otp - Verify OTP and complete registration
-router.post('/auth/verify-otp', (req, res) => {
+router.post('/auth/verify-otp', async (req, res) => {
+  let connection;
   try {
     const { phone, otp } = req.body;
 
@@ -116,11 +143,49 @@ router.post('/auth/verify-otp', (req, res) => {
       });
     }
 
-    // OTP verified!
+    // OTP verified: persist user in database, create role-specific profile, then log user in.
     const userData = pendingUsers[phone];
-    
-    // Mark as verified (in production, save to database here)
-    otpData.verified = true;
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+    connection = await getConnection();
+    await connection.beginTransaction();
+
+    const [existingUsers] = await connection.execute(
+      'SELECT user_id FROM users WHERE phone = ? OR email = ? LIMIT 1',
+      [userData.phone, userData.email || '']
+    );
+
+    if (existingUsers.length > 0) {
+      await connection.rollback();
+      delete otpStore[phone];
+      delete pendingUsers[phone];
+      return res.status(409).json({ success: false, message: 'User already registered. Please log in.' });
+    }
+
+    const safeUserName = (userData.name || '').toLowerCase().replace(/\s+/g, '_').slice(0, 200);
+    const [userResult] = await connection.execute(
+      'INSERT INTO users (full_name, email, phone, user_name, password, role) VALUES (?, ?, ?, ?, ?, ?)',
+      [userData.name, userData.email || '', userData.phone, safeUserName, hashedPassword, userData.role]
+    );
+
+    const userId = userResult.insertId;
+
+    if (userData.role === 'donor') {
+      await connection.execute(
+        'INSERT INTO donors (donor_id, blood_group, city) VALUES (?, ?, ?)',
+        [userId, 'O+', userData.location || 'Unknown']
+      );
+    } else if (userData.role === 'hospital') {
+      await connection.execute(
+        'INSERT INTO hospitals (hospital_id, hospital_name, location) VALUES (?, ?, ?)',
+        [userId, userData.name, userData.location || 'Unknown']
+      );
+    } else {
+      await connection.rollback();
+      return res.status(400).json({ success: false, message: 'Invalid role provided' });
+    }
+
+    await connection.commit();
 
     console.log(`\n✅ OTP VERIFIED`);
     console.log(`📱 Phone: ${phone}`);
@@ -128,24 +193,36 @@ router.post('/auth/verify-otp', (req, res) => {
     console.log(`📧 Role: ${userData.role}`);
     console.log(`✓ Account registered successfully!\n`);
 
-    // Clean up OTP (keep user for session)
+    // Establish authenticated session for immediate dashboard access
+    req.session.userId = userId;
+    req.session.role = userData.role;
+    req.session.name = userData.name;
+
+    // Clean up temporary OTP data
     delete otpStore[phone];
-    // Keep pendingUsers[phone] for session/dashboard redirect
-    
-    // In production: Save to database here
-    // For now, we just mark as verified and return success
+    delete pendingUsers[phone];
 
     res.json({
       success: true,
       message: 'Account verified successfully!',
       phone: phone,
       role: userData.role,
-      name: userData.name
+      name: userData.name,
+      redirect: userData.role === 'hospital' ? '/hospital-dashboard' : '/donor-dashboard'
     });
 
   } catch (error) {
+    if (connection) {
+      await connection.rollback().catch(() => {});
+      await connection.end().catch(() => {});
+    }
     console.error('OTP verification error:', error);
     res.status(500).json({ success: false, message: 'Verification failed' });
+    return;
+  } finally {
+    if (connection) {
+      await connection.end().catch(() => {});
+    }
   }
 });
 

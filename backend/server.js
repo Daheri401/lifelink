@@ -24,6 +24,7 @@ const PORT = 8500;
 // Middleware
 app.use(express.static(path.join(__dirname, '../lifelink-ui')));
 app.use(express.static(path.join(__dirname, '../css')));
+app.use(express.static(path.join(__dirname, '../pages')));
 app.use(express.static(path.join(__dirname, '../uploads'))); // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // KYC uploads
 app.use(express.json());
@@ -47,6 +48,9 @@ async function getConnection() {
 function requireAuth(req, res, next) {
   if (req.session.userId) {
     return next();
+  }
+  if (req.path.startsWith('/api/')) {
+    return res.status(401).json({ success: false, message: 'Authentication required' });
   }
   res.redirect('/login');
 }
@@ -82,10 +86,6 @@ app.get("/verify-otp.html", (req, res) => {
 });
 
 app.get("/css", (req, res) => {
-  res.sendFile(path.join(__dirname,"../css", "styles.css"));
-});
-
-app.get("/css/styles.css", (req, res) => {
   res.sendFile(path.join(__dirname,"../css", "styles.css"));
 });
 
@@ -129,7 +129,7 @@ app.get("/donor-dashboard", requireAuth, requireRole('donor'), (req, res) => {
   res.sendFile(path.join(__dirname, "../pages", "donor-dashboard.html"));
 });
 
-app.get("/hospital-dashboard", requireRole('hospital'), (req, res) => {
+app.get("/hospital-dashboard", requireAuth, requireRole('hospital'), (req, res) => {
   res.sendFile(path.join(__dirname, "../pages", "hospital-dashboard.html"));
 });
 
@@ -253,7 +253,11 @@ app.post('/api/register/hospital', async (req, res) => {
 // Donor Login
 app.post('/api/login/donor', async (req, res) => {
   try {
-    const { identifier, password } = req.body;
+    const identifier = (req.body.identifier || '').trim();
+    const password = req.body.password;
+    if (!identifier || !password) {
+      return res.status(400).json({ success: false, message: 'Identifier and password are required' });
+    }
     const connection = await getConnection();
     
     // Check if identifier is phone or email
@@ -277,7 +281,7 @@ app.post('/api/login/donor', async (req, res) => {
 
     req.session.userId = user.user_id;
     req.session.role = user.role;
-    req.session.name = user.name;
+    req.session.name = user.full_name;
 
     await connection.end();
     res.json({ success: true, role: user.role, redirect: '/donor-dashboard' });
@@ -289,7 +293,11 @@ app.post('/api/login/donor', async (req, res) => {
 // Hospital Login
 app.post('/api/login/hospital', async (req, res) => {
   try {
-    const { identifier, password } = req.body;
+    const identifier = (req.body.identifier || '').trim();
+    const password = req.body.password;
+    if (!identifier || !password) {
+      return res.status(400).json({ success: false, message: 'Identifier and password are required' });
+    }
     const connection = await getConnection();
     
     // Check if identifier is email or registration_number
@@ -314,7 +322,7 @@ app.post('/api/login/hospital', async (req, res) => {
 
     req.session.userId = user.user_id;
     req.session.role = user.role;
-    req.session.name = user.name;
+    req.session.name = user.full_name;
 
     await connection.end();
     res.json({ success: true, role: user.role, redirect: '/hospital-dashboard' });
@@ -356,8 +364,15 @@ app.get('/api/requests', requireAuth, async (req, res) => {
 // Post blood request (hospitals only)
 app.post('/api/requests', requireAuth, requireRole('hospital'), async (req, res) => {
   try {
-    const { bloodType, unitsNeeded, urgencyLevel, notes } = req.body;
+    const bloodType = req.body.bloodType || req.body.blood_type;
+    const unitsNeeded = req.body.unitsNeeded || req.body.units_needed;
+    const urgencyLevel = req.body.urgencyLevel || req.body.urgency || req.body.urgency_level;
+    const notes = req.body.notes || req.body.case_description || null;
     const hospitalId = req.session.userId;
+
+    if (!bloodType || !unitsNeeded || !urgencyLevel) {
+      return res.status(400).json({ success: false, message: 'Missing required request fields' });
+    }
 
     const connection = await getConnection();
     await connection.execute(
@@ -366,6 +381,143 @@ app.post('/api/requests', requireAuth, requireRole('hospital'), async (req, res)
     );
     await connection.end();
     res.json({ success: true, message: 'Request posted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Hospital: List own blood requests for dashboard
+app.get('/api/hospital/requests', requireAuth, requireRole('hospital'), async (req, res) => {
+  try {
+    const hospitalId = req.session.userId;
+    const connection = await getConnection();
+    const [rows] = await connection.execute(
+      `SELECT br.request_id, br.blood_type, br.units_needed, br.urgency_level, br.status, br.notes, br.request_date,
+              COALESCE(COUNT(d.donation_id), 0) AS donor_responses
+       FROM blood_requests br
+       LEFT JOIN donations d ON d.request_id = br.request_id
+       WHERE br.hospital_id = ?
+       GROUP BY br.request_id, br.blood_type, br.units_needed, br.urgency_level, br.status, br.notes, br.request_date
+       ORDER BY br.request_date DESC`,
+      [hospitalId]
+    );
+    await connection.end();
+
+    const requests = rows.map((r) => {
+      const uiStatus = r.status === 'fulfilled' ? 'completed' : (r.status === 'active' ? 'pending' : r.status);
+      return {
+      id: r.request_id,
+      blood_type: r.blood_type,
+      units_needed: r.units_needed,
+      urgency: r.urgency_level,
+      status: uiStatus,
+      case_description: r.notes || 'Blood request',
+      donor_responses: Number(r.donor_responses || 0),
+      time_ago: new Date(r.request_date).toLocaleString()
+    };});
+
+    res.json(requests);
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Hospital: Load one request (for editing)
+app.get('/api/requests/:id', requireAuth, requireRole('hospital'), async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    const hospitalId = req.session.userId;
+    const connection = await getConnection();
+    const [rows] = await connection.execute(
+      `SELECT request_id, blood_type, units_needed, urgency_level, notes
+       FROM blood_requests WHERE request_id = ? AND hospital_id = ? LIMIT 1`,
+      [requestId, hospitalId]
+    );
+    await connection.end();
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+    const row = rows[0];
+    res.json({
+      id: row.request_id,
+      blood_type: row.blood_type,
+      units_needed: row.units_needed,
+      urgency: row.urgency_level,
+      case_description: row.notes || ''
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Hospital: Update own request
+app.put('/api/requests/:id', requireAuth, requireRole('hospital'), async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    const hospitalId = req.session.userId;
+    const bloodType = req.body.bloodType || req.body.blood_type;
+    const unitsNeeded = req.body.unitsNeeded || req.body.units_needed;
+    const urgencyLevel = req.body.urgencyLevel || req.body.urgency || req.body.urgency_level;
+    const notes = req.body.notes || req.body.case_description || null;
+
+    const connection = await getConnection();
+    const [result] = await connection.execute(
+      `UPDATE blood_requests
+       SET blood_type = ?, units_needed = ?, urgency_level = ?, notes = ?
+       WHERE request_id = ? AND hospital_id = ?`,
+      [bloodType, unitsNeeded, urgencyLevel, notes, requestId, hospitalId]
+    );
+    await connection.end();
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    res.json({ success: true, message: 'Request updated successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Hospital: Mark request complete
+app.post('/api/requests/:id/complete', requireAuth, requireRole('hospital'), async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    const hospitalId = req.session.userId;
+    const connection = await getConnection();
+    const [result] = await connection.execute(
+      'UPDATE blood_requests SET status = "fulfilled" WHERE request_id = ? AND hospital_id = ?',
+      [requestId, hospitalId]
+    );
+    await connection.end();
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+    res.json({ success: true, message: 'Request marked as completed' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Hospital: donor responses feed
+app.get('/api/hospital/responses', requireAuth, requireRole('hospital'), async (req, res) => {
+  try {
+    const hospitalId = req.session.userId;
+    const connection = await getConnection();
+    const [rows] = await connection.execute(
+      `SELECT d.donation_id AS id, u.full_name AS donor_name, dr.blood_group AS blood_type,
+              COALESCE(br.notes, 'Blood request') AS request_title, d.status
+       FROM donations d
+       JOIN users u ON u.user_id = d.donor_id
+       LEFT JOIN donors dr ON dr.donor_id = d.donor_id
+       LEFT JOIN blood_requests br ON br.request_id = d.request_id
+       WHERE d.hospital_id = ?
+       ORDER BY d.donation_date DESC
+       LIMIT 20`,
+      [hospitalId]
+    );
+    await connection.end();
+    res.json(rows);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
