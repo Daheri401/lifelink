@@ -342,13 +342,23 @@ app.get('/api/requests', requireAuth, async (req, res) => {
   try {
     const connection = await getConnection();
     const [requests] = await connection.execute(`
-      SELECT br.*, h.hospital_name, h.location, u.phone
+      SELECT 
+        br.request_id AS id,
+        br.blood_type,
+        br.units_needed,
+        br.urgency_level AS urgency,
+        br.request_date,
+        br.status,
+        br.notes,
+        h.hospital_name,
+        h.location,
+        u.phone
       FROM blood_requests br
       JOIN hospitals h ON br.hospital_id = h.hospital_id
       JOIN users u ON h.hospital_id = u.user_id
       WHERE br.status = 'active'
       ORDER BY 
-        CASE br.urgency_level 
+        CASE br.urgency_level
           WHEN 'critical' THEN 1 
           WHEN 'urgent' THEN 2 
           WHEN 'routine' THEN 3 
