@@ -1114,52 +1114,32 @@ async function handleDonorLogin(e) {
   }
   
   try {
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+    }
+
     const response = await fetch('/api/login/donor', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ identifier, password })
     });
     
     const result = await response.json();
-    console.log('✅ Login response:', result);
     
-    if (response.ok) {
+    if (response.ok && result.success) {
       showSuccessNotification('Login successful');
-      
-      // Check KYC status
-      try {
-        const kycResponse = await fetch(`/api/kyc/status/${result.user.phone}`, {
-          credentials: 'include'
-        });
-        const kycData = await kycResponse.json();
-        console.log('📋 KYC status:', kycData);
-        
-        setTimeout(() => {
-          if (kycData.verified) {
-            console.log('✓ User is verified, redirecting to dashboard');
-            window.location.href = '../pages/donor-dashboard.html';
-          } else if (kycData.pending) {
-            console.log('⏳ KYC pending, redirecting to kyc-pending');
-            window.location.href = '../pages/kyc-pending.html';
-          } else {
-            console.log('📝 KYC not started, redirecting to kyc-form');
-            window.location.href = '../pages/kyc-form.html';
-          }
-        }, 1000);
-      } catch (kycError) {
-        console.error('❌ Error checking KYC status:', kycError);
-        // Redirect to KYC form if status check fails
-        setTimeout(() => {
-          window.location.href = '../pages/kyc-form.html';
-        }, 1000);
-      }
+      setTimeout(() => {
+        window.location.href = result.redirect || '/donor-dashboard';
+      }, 1000);
     } else {
       showErrorNotification(result.message || 'Login failed');
     }
   } catch (error) {
-    console.error('❌ Error logging in:', error);
+    console.error('Error logging in:', error);
     showErrorNotification('Login failed. Please try again.');
   } finally {
     if (submitBtn) {
@@ -1182,28 +1162,32 @@ async function handleHospitalLogin(e) {
   }
   
   try {
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Logging in...';
+    }
+
     const response = await fetch('/api/login/hospital', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ identifier, password })
     });
     
     const result = await response.json();
-    console.log('✅ Hospital login response:', result);
     
-    if (response.ok) {
+    if (response.ok && result.success) {
       showSuccessNotification('Login successful');
       setTimeout(() => {
-        console.log('→ Redirecting to hospital dashboard');
-        window.location.href = '../pages/hospital-dashboard.html';
+        window.location.href = result.redirect || '/hospital-dashboard';
       }, 1000);
     } else {
       showErrorNotification(result.message || 'Login failed');
     }
   } catch (error) {
-    console.error('❌ Error logging in:', error);
+    console.error('Error logging in:', error);
     showErrorNotification('Login failed. Please try again.');
   } finally {
     if (submitBtn) {
@@ -1300,93 +1284,10 @@ function toggleSidebar() {
 }
 
 // ========================================
-// CORE AUTHENTICATION HELPERS  
-// ========================================
-
-/**
- * Get authenticated user from localStorage
- * Returns user object or null if not authenticated
- */
-function getAuthenticatedUser() {
-  try {
-    const userJson = localStorage.getItem('user');
-    if (!userJson) {
-      console.log('⚠️ No user found in localStorage');
-      return null;
-    }
-    const user = JSON.parse(userJson);
-    console.log('✓ Current user:', user);
-    return user;
-  } catch (error) {
-    console.error('❌ Error parsing user from localStorage:', error);
-    return null;
-  }
-}
-
-/**
- * Protect dashboard - redirect to login if user not authenticated
- * Also check KYC status for donors
- */
-async function protectDashboard(isDonorDashboard = true) {
-  console.log('🛡️ Protecting dashboard...');
-  
-  const user = getAuthenticatedUser();
-  
-  if (!user) {
-    console.log('⚠️ No authenticated user, redirecting to login');
-    window.location.href = '../pages/donor-login.html';
-    return false;
-  }
-  
-  // For donor dashboards, check KYC status
-  if (isDonorDashboard && user.role === 'donor') {
-    try {
-      console.log('📋 Checking KYC status for donor:', user.phone);
-      const kycResponse = await fetch(`/api/kyc/status/${user.phone}`, {
-        credentials: 'include'
-      });
-      const kycData = await kycResponse.json();
-      console.log('📋 KYC status result:', kycData);
-      
-      if (!kycData.verified) {
-        console.warn('⚠️ User not KYC verified, redirecting to KYC form');
-        showAlert(document.body, '⚠️ Please complete KYC verification first', 'warning');
-        setTimeout(() => {
-          window.location.href = '../pages/kyc-form.html';
-        }, 2000);
-        return false;
-      }
-    } catch (error) {
-      console.error('❌ Error checking KYC status:', error);
-      showAlert(document.body, '⚠️ Could not verify KYC status. Please try again.', 'warning');
-      return false;
-    }
-  }
-  
-  console.log('✓ Dashboard protection passed');
-  return true;
-}
-
-/**
- * Logout user - clear localStorage and redirect to login
- */
-function logout() {
-  console.log('🚪 Logging out user');
-  localStorage.removeItem('user');
-  console.log('✓ User data cleared from localStorage');
-  showSuccessNotification('Logged out successfully');
-  setTimeout(() => {
-    window.location.href = '../pages/donor-login.html';
-  }, 1000);
-}
-
-// ========================================
 // 12. INITIALIZATION
 // ========================================
 
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 LifeLink initialization starting');
-  
   // Initialize theme
   initializeTheme();
   setupThemeToggle();
@@ -1403,47 +1304,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Setup OTP input
   setupOtpInput();
   
-  // Initialize signup forms (OTP system)
-  initializeSignupForms();
-  
-  // Initialize KYC form if present
-  const kycForm = document.getElementById('kyc-form');
-  if (kycForm) {
-    console.log('📋 KYC form detected, initializing');
-    initializeKycForm();
-  }
-  
-  // Protect dashboard if this is a dashboard page
-  const isDonorDash = document.body.classList.contains('donor-dashboard') || 
-                      document.querySelector('.donor-dashboard');
-  const isHospitalDash = document.body.classList.contains('hospital-dashboard') || 
-                         document.querySelector('.hospital-dashboard');
-  
-  if (isDonorDash) {
-    console.log('🎯 Protecting donor dashboard');
-    protectDashboard(true).then(isValid => {
-      if (isValid) {
-        // Initialize dashboard only if user is authenticated and verified
-        const userRole = document.body.dataset.userRole || 'donor';
-        if (userRole) {
-          initDashboard(userRole);
-        }
-      }
-    });
-  } else if (isHospitalDash) {
-    console.log('🎯 Protecting hospital dashboard');
-    protectDashboard(false).then(isValid => {
-      if (isValid) {
-        // Initialize hospital dashboard
-        initDashboard('hospital');
-      }
-    });
-  } else {
-    // For non-dashboard pages, just initialize dashboard if role is present
-    const userRole = document.body.dataset.userRole;
-    if (userRole) {
-      initDashboard(userRole);
-    }
+  // Initialize dashboard if present
+  const userRole = document.body.dataset.userRole;
+  if (userRole) {
+    initDashboard(userRole);
   }
   
   // Smooth scroll for anchor links
@@ -1457,7 +1321,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  console.log('✅ LifeLink UI initialized');
+  console.log('LifeLink UI initialized');
 });
 
 // ========================================
@@ -1535,16 +1399,16 @@ async function handleDonorSignup(e) {
   
   const form = e.target;
   const alertDiv = document.getElementById('auth-alert');
-  const submitBtn = form.querySelector('button[type="submit"]');
+  const submitBtn = document.getElementById('signup-submit-btn');
   
   try {
     // Get form data manually (FormData might not work with custom IDs)
     const userData = {
-      name: document.getElementById('full_name')?.value || document.getElementById('name')?.value,
-      email: document.getElementById('email')?.value,
-      phone: document.getElementById('phone')?.value,
-      password: document.getElementById('password')?.value,
-      location: document.getElementById('location')?.value || document.getElementById('city')?.value
+      name: document.getElementById('full_name').value,
+      email: document.getElementById('email').value || 'donor@example.com',
+      phone: document.getElementById('phone').value,
+      password: document.getElementById('password').value,
+      location: document.getElementById('location').value
     };
 
     // Validation
@@ -1559,12 +1423,8 @@ async function handleDonorSignup(e) {
     }
 
     // Disable button and show loading
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = '⏳ Sending OTP...';
-    }
-    
-    console.log('📝 Donor signup with phone:', userData.phone);
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ Sending OTP...';
 
     // Call backend
     const response = await fetch('/api/auth/register', {
@@ -1572,7 +1432,6 @@ async function handleDonorSignup(e) {
       headers: {
         'Content-Type': 'application/json'
       },
-      credentials: 'include',
       body: JSON.stringify({
         name: userData.name,
         email: userData.email,
@@ -1584,15 +1443,8 @@ async function handleDonorSignup(e) {
     });
 
     const data = await response.json();
-    console.log('✅ Donor signup response:', data);
 
     if (data.success) {
-      // Save temporary user data
-      localStorage.setItem('tempData', JSON.stringify({
-        phone: userData.phone,
-        role: 'donor'
-      }));
-      
       currentPhone = userData.phone;
       currentRole = 'donor';
       
@@ -1601,12 +1453,8 @@ async function handleDonorSignup(e) {
       // Hide signup form, show OTP section
       setTimeout(() => {
         form.style.display = 'none';
-        const otpSection = document.getElementById('otp-section');
-        if (otpSection) {
-          otpSection.style.display = 'block';
-          const phoneDisplay = document.getElementById('otp-phone-display');
-          if (phoneDisplay) phoneDisplay.textContent = userData.phone;
-        }
+        document.getElementById('otp-section').style.display = 'block';
+        document.getElementById('otp-phone-display').textContent = userData.phone;
         
         // Start resend timer
         startResendTimer();
@@ -1615,13 +1463,11 @@ async function handleDonorSignup(e) {
       showAuthAlert(alertDiv, `❌ ${data.message}`, 'error');
     }
   } catch (error) {
-    showAlert(alertDiv, `❌ Error: ${error.message}`, 'error');
+    showAuthAlert(alertDiv, `❌ Error: ${error.message}`, 'error');
     console.error('Signup error:', error);
   } finally {
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Create Account';
-    }
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Create Account';
   }
 }
 
@@ -1631,15 +1477,15 @@ async function handleHospitalSignup(e) {
   
   const form = e.target;
   const alertDiv = document.getElementById('auth-alert');
-  const submitBtn = form.querySelector('button[type="submit"]');
+  const submitBtn = document.getElementById('signup-submit-btn');
   
   try {
     const userData = {
-      name: document.getElementById('hospital-name')?.value || document.getElementById('name')?.value,
-      email: document.getElementById('email')?.value,
-      phone: document.getElementById('phone')?.value,
-      password: document.getElementById('password')?.value,
-      location: document.getElementById('city')?.value || document.getElementById('location')?.value
+      name: document.getElementById('hospital-name').value,
+      email: document.getElementById('email').value,
+      phone: document.getElementById('phone').value,
+      password: document.getElementById('password').value,
+      location: document.getElementById('city').value
     };
 
     // Validation
@@ -1654,12 +1500,8 @@ async function handleHospitalSignup(e) {
     }
 
     // Disable button and show loading
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = '⏳ Sending OTP...';
-    }
-    
-    console.log('📝 Hospital signup with phone:', userData.phone);
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ Sending OTP...';
 
     // Call backend
     const response = await fetch('/api/auth/register', {
@@ -1667,7 +1509,6 @@ async function handleHospitalSignup(e) {
       headers: {
         'Content-Type': 'application/json'
       },
-      credentials: 'include',
       body: JSON.stringify({
         name: userData.name,
         email: userData.email,
@@ -1679,15 +1520,8 @@ async function handleHospitalSignup(e) {
     });
 
     const data = await response.json();
-    console.log('✅ Hospital signup response:', data);
 
     if (data.success) {
-      // Save temporary user data
-      localStorage.setItem('tempData', JSON.stringify({
-        phone: userData.phone,
-        role: 'hospital'
-      }));
-      
       currentPhone = userData.phone;
       currentRole = 'hospital';
       
@@ -1696,12 +1530,8 @@ async function handleHospitalSignup(e) {
       // Hide signup form, show OTP section
       setTimeout(() => {
         form.style.display = 'none';
-        const otpSection = document.getElementById('otp-section');
-        if (otpSection) {
-          otpSection.style.display = 'block';
-          const phoneDisplay = document.getElementById('otp-phone-display');
-          if (phoneDisplay) phoneDisplay.textContent = userData.phone;
-        }
+        document.getElementById('otp-section').style.display = 'block';
+        document.getElementById('otp-phone-display').textContent = userData.phone;
         
         // Start resend timer
         startResendTimer();
@@ -1710,13 +1540,11 @@ async function handleHospitalSignup(e) {
       showAuthAlert(alertDiv, `❌ ${data.message}`, 'error');
     }
   } catch (error) {
-    showAlert(alertDiv, `❌ Error: ${error.message}`, 'error');
+    showAuthAlert(alertDiv, `❌ Error: ${error.message}`, 'error');
     console.error('Signup error:', error);
   } finally {
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Register Hospital';
-    }
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Register Hospital';
   }
 }
 
@@ -1767,8 +1595,6 @@ async function handleOtpVerification(e) {
     // Disable button and show loading
     submitBtn.disabled = true;
     submitBtn.textContent = '⏳ Verifying...';
-    
-    console.log('🔐 Verifying OTP:', otp.substring(0, 2) + '****');
 
     // Call backend
     const response = await fetch('/api/auth/verify-otp', {
@@ -1784,20 +1610,17 @@ async function handleOtpVerification(e) {
     });
 
     const data = await response.json();
-    console.log('✅ OTP verification response:', data);
 
     if (data.success) {
-      showAlert(alertDiv, `✅ ${data.message}`, 'success');
+      showAuthAlert(alertDiv, `✅ ${data.message}`, 'success');
       
-      console.log('✓ Registration successful! User role:', data.user.role);
+      console.log('✅ Registration successful!', data);
       
-      // Redirect based on role
+      // Redirect after 2 seconds
       setTimeout(() => {
-        if (currentRole === 'donor') {
-          window.location.href = '/donor-dashboard';
-        } else if (currentRole === 'hospital') {
-          window.location.href = '/pages/hospital-dashboard.html';
-        }
+        const role = data.role || currentRole;
+        const redirectPath = data.redirect || (role === 'hospital' ? '/hospital-dashboard' : '/donor-dashboard');
+        window.location.href = redirectPath;
       }, 2000);
     } else {
       showAuthAlert(alertDiv, `❌ ${data.message}`, 'error');
@@ -1809,7 +1632,7 @@ async function handleOtpVerification(e) {
       }
     }
   } catch (error) {
-    showAlert(alertDiv, `❌ Verification error: ${error.message}`, 'error');
+    showAuthAlert(alertDiv, `❌ Verification error: ${error.message}`, 'error');
     console.error('OTP verification error:', error);
   } finally {
     submitBtn.disabled = false;
@@ -1895,89 +1718,23 @@ function showAuthAlert(alertDiv, message, type) {
 // ============================================
 
 /**
- * Handle KYC form submission
- * Uploads documents and submits verification
+ * Start KYC verification flow
+ * Called when user tries to accept request without KYC
  */
-async function handleKycSubmit(e) {
-  e.preventDefault();
-  console.log('📝 Submitting KYC form');
+function startKYCVerification() {
+  const phone = localStorage.getItem('userPhone');
   
-  const user = getAuthenticatedUser();
-  if (!user) {
-    showErrorNotification('User not authenticated');
-    window.location.href = '../pages/donor-login.html';
+  if (!phone) {
+    console.error('User phone not found');
+    window.location.href = '/donor-signup';
     return;
   }
-  
-  try {
-    // Get form data
-    const formData = new FormData(e.target);
-    
-    // Ensure we have required fields
-    const bloodGroup = document.getElementById('blood-group')?.value;
-    const idCard = document.getElementById('id-card')?.files[0];
-    
-    if (!bloodGroup || !idCard) {
-      showErrorNotification('Please fill in all fields');
-      return;
-    }
-    
-    // Build form data for submission
-    const kycFormData = new FormData();
-    kycFormData.append('phone', user.phone);
-    kycFormData.append('bloodGroup', bloodGroup);
-    kycFormData.append('idCard', idCard);
-    
-    console.log('📤 Submitting KYC to /api/kyc/submit with phone:', user.phone);
-    
-    const response = await fetch('/api/kyc/submit', {
-      method: 'POST',
-      credentials: 'include',
-      body: kycFormData
-    });
-    
-    const result = await response.json();
-    console.log('✅ KYC submission response:', result);
-    
-    if (result.success) {
-      showSuccessNotification('✓ KYC documents submitted successfully!');
-      console.log('→ Redirecting to KYC pending page');
-      setTimeout(() => {
-        window.location.href = '../pages/kyc-pending.html';
-      }, 1500);
-    } else {
-      showErrorNotification(result.message || 'Failed to submit KYC documents');
-    }
-  } catch (error) {
-    console.error('❌ Error submitting KYC:', error);
-    showErrorNotification('Error submitting documents. Please try again.');
-  }
-}
 
-/**
- * Start KYC flow - ensure user is authenticated
- */
-function initializeKycForm() {
-  console.log('🔍 Initializing KYC form');
+  // Store the phone in localStorage for kyc-form.html
+  localStorage.setItem('userPhone', phone);
   
-  const user = getAuthenticatedUser();
-  if (!user) {
-    console.warn('⚠️ No authenticated user, redirecting to login');
-    window.location.href = '../pages/donor-login.html';
-    return;
-  }
-  
-  // Pre-populate phone if available
-  const phoneDisplay = document.getElementById('phone-display');
-  if (phoneDisplay) {
-    phoneDisplay.textContent = user.phone;
-  }
-  
-  // Setup form submission
-  const kycForm = document.getElementById('kyc-form');
-  if (kycForm) {
-    kycForm.addEventListener('submit', handleKycSubmit);
-  }
+  // Redirect to KYC form
+  window.location.href = '/pages/kyc-form.html';
 }
 
 /**
@@ -2211,6 +1968,11 @@ async function loadPendingKYCRequests() {
   }
 }
 
-// Initialize on DOM ready
-console.log('LifeLink script loaded');
+// Initialize when DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  initializeTheme();
+  setupThemeToggle();
+  initializeSignupForms();
+  displayKYCStatus();
+});
 
