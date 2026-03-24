@@ -4,105 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LifeLink - Connecting Lives Through Blood</title>
-  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="/css">
 
-  <style>
-    .splash-container {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(135deg, var(--color-deep-red) 0%, var(--color-light-green) 100%);
-      color: white;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .splash-logo {
-      width: 120px;
-      height: 120px;
-      margin-bottom: 30px;
-      animation: pulse 2s infinite;
-    }
-
-    .splash-title {
-      font-size: 2.5rem;
-      font-weight: bold;
-      margin-bottom: 20px;
-      opacity: 0;
-      animation: fadeInUp 1s ease-out 0.5s forwards;
-    }
-
-    .splash-subtitle {
-      font-size: 1.2rem;
-      margin-bottom: 40px;
-      opacity: 0;
-      animation: fadeInUp 1s ease-out 1s forwards;
-    }
-
-    .splash-loading {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      opacity: 0;
-      animation: fadeInUp 1s ease-out 1.5s forwards;
-    }
-
-    .loading-dots {
-      display: flex;
-      gap: 4px;
-    }
-
-    .loading-dot {
-      width: 8px;
-      height: 8px;
-      background: white;
-      border-radius: 50%;
-      animation: bounce 1.4s infinite ease-in-out both;
-    }
-
-    .loading-dot:nth-child(1) { animation-delay: -0.32s; }
-    .loading-dot:nth-child(2) { animation-delay: -0.16s; }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes bounce {
-      0%, 80%, 100% {
-        transform: scale(0);
-      }
-      40% {
-        transform: scale(1);
-      }
-    }
-
-    @media (max-width: 768px) {
-      .splash-title {
-        font-size: 2rem;
-      }
-      .splash-subtitle {
-        font-size: 1rem;
-      }
-    }
-  </style>
 </head>
 <body>
   <div class="splash-container">
-    <img src="New%20folder/logo.png" alt="LifeLink logo" class="splash-logo">
+    <img src="logo.png" alt="LifeLink logo" class="splash-logo">
     <h1 class="splash-title">LifeLink</h1>
     <p class="splash-subtitle">Connecting blood donors and hospitals</p>
     <div class="splash-loading">
@@ -114,7 +21,7 @@
       </div>
     </div>
   </div>
-
+<script src="/script"></script>
   <script>
     // Redirect to main landing page after 3 seconds
     setTimeout(() => {

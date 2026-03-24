@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Donor Dashboard - LifeLink</title>
-  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="/css">
 </head>
-<body class="dashboard" data-user-role="donor">
+<body class="dashboard-page" data-user-role="donor">
   <!-- HEADER -->
   <header class="header">
     <div class="container">
       <div class="header-content">
         <a href="/home" class="logo">
-          <img src="../New%20folder/logo.png" alt="LifeLink logo" class="logo-img">
+          <img src="logo.png" alt="LifeLink logo" class="logo-img">
           <span class="logo-text">LifeLink</span>
         </a>
         <nav class="nav">
@@ -32,7 +32,7 @@
 
   <!-- MAIN DASHBOARD -->
   <div class="container">
-    <div class="dashboard">
+    <div class="dashboard-layout">
       <!-- SIDEBAR -->
       <aside class="sidebar">
         <div class="sidebar-title">Menu</div>
@@ -91,7 +91,7 @@
               </div>
             </div>
             <div class="hero-avatar">
-              <img src="../New%20folder/user-avatar.png" alt="Donor avatar" class="avatar-large">
+              <img src="logo.png" alt="Donor avatar" class="avatar-large">
               <div class="blood-type-badge" id="blood-group-badge">O+</div>
             </div>
           </div>
@@ -361,8 +361,8 @@
         
         if (response.ok) {
           const profile = await response.json();
-          document.getElementById('user-name').textContent = profile.name;
-          document.getElementById('blood-group-badge').textContent = profile.blood_type;
+          document.getElementById('user-name').textContent = profile.full_name || profile.name || 'Donor';
+          document.getElementById('blood-group-badge').textContent = profile.blood_type || 'O+';
           
           // Load verification status
           loadVerificationStatus(profile);
@@ -419,19 +419,22 @@
         if (response.ok) {
           const stats = await response.json();
           document.getElementById('total-donations').textContent = stats.total_donations || 0;
-          document.getElementById('nearby-requests').textContent = stats.nearby_requests || 0;
           document.getElementById('next-donation').textContent = stats.next_donation || 'N/A';
           document.getElementById('lives-impacted').textContent = stats.lives_impacted || 0;
         } else {
-          console.error('Failed to load stats');
+          document.getElementById('total-donations').textContent = '0';
+          document.getElementById('next-donation').textContent = 'N/A';
+          document.getElementById('lives-impacted').textContent = '0';
         }
       } catch (error) {
-        console.error('Error loading stats:', error);
+        document.getElementById('total-donations').textContent = '0';
+        document.getElementById('next-donation').textContent = 'N/A';
+        document.getElementById('lives-impacted').textContent = '0';
       }
     }
 
     // Load blood requests
-    async function loadRequests() {
+    async function loadRequestsLegacy() {
       try {
         const response = await fetch('/api/requests?status=open', {
           credentials: 'include'
@@ -439,7 +442,7 @@
         
         if (response.ok) {
           const requests = await response.json();
-          displayRequests(requests);
+          displayRequestsLegacy(requests);
         } else {
           console.error('Failed to load requests');
         }
@@ -449,8 +452,8 @@
     }
 
     // Display requests in the grid
-    function displayRequests(requests) {
-      const container = document.getElementById('requests-container');
+    function displayRequestsLegacy(requests) {
+      const container = document.getElementById('all-requests-container');
       
       if (requests.length === 0) {
         container.innerHTML = '<p class="text-center text-muted">No blood requests available at this time.</p>';
@@ -670,7 +673,7 @@
           return;
         }
 
-        const verifyButton = event.target;
+        const verifyButton = document.querySelector('#scan-result .btn.btn-primary');
         verifyButton.disabled = true;
         verifyButton.textContent = 'Verifying...';
 
@@ -727,7 +730,6 @@
     document.addEventListener('DOMContentLoaded', function() {
       loadProfile();
       loadStats();
-      loadRequests();
     });
   </script>
 </body>

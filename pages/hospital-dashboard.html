@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hospital Dashboard - LifeLink</title>
-  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="/css">
 </head>
-<body class="dashboard" data-user-role="hospital">
+<body class="dashboard-page" data-user-role="hospital">
   <!-- HEADER -->
   <header class="header">
     <div class="container">
       <div class="header-content">
         <a href="/home" class="logo">
-          <img src="../New%20folder/logo.png" alt="LifeLink logo" class="logo-img">
+          <img src="logo.png" alt="LifeLink logo" class="logo-img">
           <span class="logo-text">LifeLink</span>
         </a>
         <nav class="nav">
@@ -32,7 +32,7 @@
 
   <!-- MAIN DASHBOARD -->
   <div class="container">
-    <div class="dashboard">
+    <div class="dashboard-layout">
       <!-- SIDEBAR -->
       <aside class="sidebar">
         <div class="sidebar-title">Menu</div>
@@ -71,7 +71,7 @@
       <main class="main-content">
         <!-- WELCOME SECTION -->
         <div class="welcome-card">
-          <img src="../New%20folder/hospital-logo.png" alt="Hospital logo">
+          <img src="logo.png" alt="Hospital logo">
           <div class="d-flex justify-content-between align-items-center">
             <div>
               <h2>Central Hospital Blood Bank 🏥</h2>
@@ -101,101 +101,16 @@
             <!-- FILTER -->
             <div class="filter-bar">
               <div class="filter-group">
-                <button class="btn btn-small filter-btn active" data-filter="all">All (12)</button>
-                <button class="btn btn-small filter-btn" data-filter="pending">Pending (5)</button>
-                <button class="btn btn-small filter-btn" data-filter="accepted">Accepted (4)</button>
-                <button class="btn btn-small filter-btn" data-filter="completed">Completed (3)</button>
+                <button class="btn btn-small filter-btn active" data-filter="all">All</button>
+                <button class="btn btn-small filter-btn" data-filter="pending">Pending</button>
+                <button class="btn btn-small filter-btn" data-filter="accepted">Accepted</button>
+                <button class="btn btn-small filter-btn" data-filter="completed">Completed</button>
               </div>
             </div>
 
             <!-- REQUESTS TABLE -->
-            <div class="requests-list">
-              <!-- Critical Pending -->
-              <div class="request-card critical">
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                  <div style="flex: 1;">
-                    <div class="d-flex gap-2 align-items-center mb-2">
-                      <span class="request-blood-type" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px;">O-</span>
-                      <div>
-                        <span class="request-badge badge-critical">CRITICAL</span>
-                        <span class="badge badge-warning" style="margin-left: 8px;">PENDING</span>
-                      </div>
-                    </div>
-                    <h4 style="margin: 0 0 4px 0;">Emergency: Traffic Accident</h4>
-                    <p style="margin: 0 0 8px 0; color: var(--color-gray-dark); font-size: 14px;">3 units needed • Posted 2 hours ago</p>
-                    <p style="margin: 0; color: var(--color-gray-medium); font-size: 13px;">👥 0 donors responding</p>
-                  </div>
-                  <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-small" onclick="viewRequest(1)">View</button>
-                    <button class="btn btn-small btn-secondary" onclick="editRequest(1)">Edit</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Urgent Accepted -->
-              <div class="request-card urgent">
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                  <div style="flex: 1;">
-                    <div class="d-flex gap-2 align-items-center mb-2">
-                      <span class="request-blood-type" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px;">AB+</span>
-                      <div>
-                        <span class="request-badge badge-urgent">URGENT</span>
-                        <span class="badge badge-success" style="margin-left: 8px;">ACCEPTED</span>
-                      </div>
-                    </div>
-                    <h4 style="margin: 0 0 4px 0;">Surgery Preparation</h4>
-                    <p style="margin: 0 0 8px 0; color: var(--color-gray-dark); font-size: 14px;">2 units needed • Posted 5 hours ago</p>
-                    <p style="margin: 0; color: var(--color-gray-medium); font-size: 13px;">👥 2 donors confirmed • 1 arriving today</p>
-                  </div>
-                  <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-small" onclick="viewRequest(2)">View</button>
-                    <button class="btn btn-small btn-secondary" onclick="completeRequest(2)">Mark Complete</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Routine Completed -->
-              <div class="request-card routine">
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                  <div style="flex: 1;">
-                    <div class="d-flex gap-2 align-items-center mb-2">
-                      <span class="request-blood-type" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px;">O+</span>
-                      <div>
-                        <span class="request-badge badge-routine">ROUTINE</span>
-                        <span class="badge badge-success" style="margin-left: 8px;">COMPLETED</span>
-                      </div>
-                    </div>
-                    <h4 style="margin: 0 0 4px 0;">Blood Bank Replenishment</h4>
-                    <p style="margin: 0 0 8px 0; color: var(--color-gray-dark); font-size: 14px;">10 units needed • Posted yesterday</p>
-                    <p style="margin: 0; color: var(--color-gray-medium); font-size: 13px;">👥 8 donors contributed • Completed✓</p>
-                  </div>
-                  <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-small" onclick="viewRequest(3)">View</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Another Critical -->
-              <div class="request-card critical">
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                  <div style="flex: 1;">
-                    <div class="d-flex gap-2 align-items-center mb-2">
-                      <span class="request-blood-type" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px;">B-</span>
-                      <div>
-                        <span class="request-badge badge-critical">CRITICAL</span>
-                        <span class="badge badge-warning" style="margin-left: 8px;">PENDING</span>
-                      </div>
-                    </div>
-                    <h4 style="margin: 0 0 4px 0;">Post-Surgical Complication</h4>
-                    <p style="margin: 0 0 8px 0; color: var(--color-gray-dark); font-size: 14px;">1 unit needed • Posted 30 minutes ago</p>
-                    <p style="margin: 0; color: var(--color-gray-medium); font-size: 13px;">👥 0 donors responding</p>
-                  </div>
-                  <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-small" onclick="viewRequest(4)">View</button>
-                    <button class="btn btn-small btn-secondary" onclick="editRequest(4)">Edit</button>
-                  </div>
-                </div>
-              </div>
+            <div class="requests-list" id="hospital-requests-list">
+              <p class="text-muted">Loading requests...</p>
             </div>
           </div>
         </div>
@@ -217,29 +132,7 @@
                     <th style="text-align: left; padding: 12px; color: var(--color-gray-dark); font-weight: 600;">Action</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr style="border-bottom: 1px solid var(--color-gray-light);">
-                    <td style="padding: 12px;">John Doe</td>
-                    <td style="padding: 12px;"><span class="badge badge-primary">O+</span></td>
-                    <td style="padding: 12px;">Blood Bank Replenishment</td>
-                    <td style="padding: 12px;"><span class="badge badge-success">Confirmed</span></td>
-                    <td style="padding: 12px;"><button class="btn btn-small" onclick="contactDonor(1)">Contact</button></td>
-                  </tr>
-                  <tr style="border-bottom: 1px solid var(--color-gray-light);">
-                    <td style="padding: 12px;">Marie Kamga</td>
-                    <td style="padding: 12px;"><span class="badge badge-primary">AB+</span></td>
-                    <td style="padding: 12px;">Surgery Preparation</td>
-                    <td style="padding: 12px;"><span class="badge badge-success">Confirmed</span></td>
-                    <td style="padding: 12px;"><button class="btn btn-small" onclick="contactDonor(2)">Contact</button></td>
-                  </tr>
-                  <tr style="border-bottom: 1px solid var(--color-gray-light);">
-                    <td style="padding: 12px;">Paul Nkomo</td>
-                    <td style="padding: 12px;"><span class="badge badge-primary">O-</span></td>
-                    <td style="padding: 12px;">Emergency: Traffic Accident</td>
-                    <td style="padding: 12px;"><span class="badge badge-warning">Pending</span></td>
-                    <td style="padding: 12px;"><button class="btn btn-small" onclick="contactDonor(3)">Contact</button></td>
-                  </tr>
-                </tbody>
+                <tbody id="hospital-responses-body"></tbody>
               </table>
             </div>
           </div>
@@ -393,22 +286,41 @@
 
   <script src="/js/script.js"></script>
   <script>
+    let hospitalRequests = [];
+
+    async function fetchApiJson(url, options = {}) {
+      const response = await fetch(url, {
+        credentials: 'include',
+        ...options
+      });
+
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        if (response.redirected || response.url.includes('/login')) {
+          window.location.href = '/hospital-login';
+          throw new Error('Session expired. Please log in again.');
+        }
+        throw new Error('Unexpected server response');
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = '/hospital-login';
+        }
+        throw new Error(data.message || 'Request failed');
+      }
+      return data;
+    }
+
     // Load hospital profile information
     async function loadHospitalProfile() {
       try {
-        const response = await fetch('/api/profile', {
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const profile = await response.json();
-          // Update hospital name in welcome card
-          const welcomeCard = document.querySelector('.welcome-card h2');
-          if (welcomeCard) {
-            welcomeCard.textContent = `${profile.name} Blood Bank 🏥`;
-          }
-        } else {
-          console.error('Failed to load hospital profile');
+        const profile = await fetchApiJson('/api/profile');
+        const welcomeCard = document.querySelector('.welcome-card h2');
+        if (welcomeCard) {
+          const hospitalName = profile.full_name || profile.name || 'Hospital';
+          welcomeCard.textContent = `${hospitalName} Blood Bank 🏥`;
         }
       } catch (error) {
         console.error('Error loading hospital profile:', error);
@@ -416,22 +328,13 @@
     }
 
     // Load hospital statistics
-    async function loadHospitalStats() {
+    async function loadHospitalStatsLegacy() {
       try {
         const response = await fetch('/api/hospital/stats', {
           credentials: 'include'
         });
         
-        if (response.ok) {
-          const stats = await response.json();
-          // Update stats grid
-          document.querySelector('.stat-value:nth-child(2)').textContent = stats.active_requests || 0;
-          document.querySelector('.stat-value:nth-child(4)').textContent = stats.fulfilled_this_week || 0;
-          document.querySelector('.stat-value:nth-child(6)').textContent = stats.verified_donors || 0;
-          document.querySelector('.stat-value:nth-child(8)').textContent = stats.avg_response_time || 'N/A';
-        } else {
-          console.error('Failed to load hospital stats');
-        }
+        if (!response.ok) console.error('Failed to load hospital stats');
       } catch (error) {
         console.error('Error loading hospital stats:', error);
       }
@@ -440,24 +343,18 @@
     // Load active requests
     async function loadActiveRequests() {
       try {
-        const response = await fetch('/api/hospital/requests', {
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const requests = await response.json();
-          displayActiveRequests(requests);
-        } else {
-          console.error('Failed to load active requests');
-        }
+        hospitalRequests = await fetchApiJson('/api/hospital/requests');
+        displayActiveRequests(hospitalRequests);
       } catch (error) {
         console.error('Error loading active requests:', error);
+        const container = document.getElementById('hospital-requests-list');
+        if (container) container.innerHTML = '<p class="text-center text-muted">Unable to load requests.</p>';
       }
     }
 
     // Display active requests
     function displayActiveRequests(requests) {
-      const container = document.querySelector('.requests-list');
+      const container = document.getElementById('hospital-requests-list');
       
       if (requests.length === 0) {
         container.innerHTML = '<p class="text-center text-muted">No active requests at this time.</p>';
@@ -465,8 +362,8 @@
       }
 
       container.innerHTML = requests.map(request => {
-        const urgencyClass = request.urgency.toLowerCase();
-        const statusClass = request.status.toLowerCase();
+        const urgencyClass = (request.urgency || 'routine').toLowerCase();
+        const statusClass = (request.status || 'pending').toLowerCase();
         const statusColor = {
           'pending': 'var(--color-orange)',
           'accepted': 'var(--color-light-green)',
@@ -480,12 +377,12 @@
                 <div class="d-flex gap-2 align-items-center mb-2">
                   <span class="request-blood-type" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 18px;">${request.blood_type}</span>
                   <div>
-                    <span class="request-badge badge-${urgencyClass}">${request.urgency.toUpperCase()}</span>
+                    <span class="request-badge badge-${urgencyClass}">${urgencyClass.toUpperCase()}</span>
                     <span class="badge" style="margin-left: 8px; background-color: ${statusColor};">${request.status.toUpperCase()}</span>
                   </div>
                 </div>
                 <h4 style="margin: 0 0 4px 0;">${request.case_description || 'Blood Request'}</h4>
-                <p style="margin: 0 0 8px 0; color: var(--color-gray-dark); font-size: 14px;">${request.units_needed} units needed • Posted ${request.time_ago}</p>
+                <p style="margin: 0 0 8px 0; color: var(--color-gray-dark); font-size: 14px;">${request.units_needed} units needed • Posted ${request.time_ago || 'recently'}</p>
                 <p style="margin: 0; color: var(--color-gray-medium); font-size: 13px;">👥 ${request.donor_responses || 0} donors responding</p>
               </div>
               <div style="display: flex; gap: 8px;">
@@ -500,27 +397,30 @@
       }).join('');
     }
 
+    function applyRequestFilter(filterKey) {
+      if (!filterKey || filterKey === 'all') {
+        displayActiveRequests(hospitalRequests);
+        return;
+      }
+      const filtered = hospitalRequests.filter(r => (r.status || '').toLowerCase() === filterKey);
+      displayActiveRequests(filtered);
+    }
+
     // Load donor responses
     async function loadDonorResponses() {
       try {
-        const response = await fetch('/api/hospital/responses', {
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const responses = await response.json();
-          displayDonorResponses(responses);
-        } else {
-          console.error('Failed to load donor responses');
-        }
+        const responses = await fetchApiJson('/api/hospital/responses');
+        displayDonorResponses(responses);
       } catch (error) {
         console.error('Error loading donor responses:', error);
+        const tbody = document.getElementById('hospital-responses-body');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Unable to load donor responses.</td></tr>';
       }
     }
 
     // Display donor responses
     function displayDonorResponses(responses) {
-      const tbody = document.querySelector('tbody');
+      const tbody = document.getElementById('hospital-responses-body');
       
       if (responses.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No donor responses yet.</td></tr>';
@@ -618,59 +518,65 @@
 
     function submitPostRequest() {
       const form = document.getElementById('post-request-form');
-      const formData = new FormData(form);
       
       const requestData = {
-        blood_type: formData.get('blood-type'),
-        units_needed: parseInt(formData.get('units-needed')),
-        urgency: formData.get('urgency'),
-        location: formData.get('hospital-location'),
-        case_description: formData.get('case-description')
+        blood_type: document.getElementById('blood-type').value,
+        units_needed: parseInt(document.getElementById('units-needed').value, 10),
+        urgency: document.getElementById('urgency').value,
+        location: document.getElementById('hospital-location').value,
+        case_description: document.getElementById('case-description').value
       };
+
+      if (!requestData.blood_type || !requestData.units_needed || !requestData.urgency || !requestData.location || !requestData.case_description) {
+        showErrorNotification('Please complete all request fields');
+        return;
+      }
 
       const requestId = form.dataset.requestId;
       const url = requestId ? `/api/requests/${requestId}` : '/api/requests';
       const method = requestId ? 'PUT' : 'POST';
 
-      fetch(url, {
+      fetchApiJson(url, {
         method: method,
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify(requestData)
       })
-      .then(response => {
-        if (response.ok) {
+        .then(() => {
           const message = requestId ? 'Request updated successfully' : 'Request posted successfully';
           showSuccessNotification(message);
           closeModal('postRequestModal');
           form.reset();
           delete form.dataset.requestId;
           loadActiveRequests();
-          loadHospitalStats();
-        } else {
-          throw new Error('Failed to submit request');
-        }
-      })
-      .catch(error => {
-        console.error('Error submitting request:', error);
-        showErrorNotification('Failed to submit request. Please try again.');
-      });
+        })
+        .catch(error => {
+          console.error('Error submitting request:', error);
+          showErrorNotification(error.message || 'Failed to submit request. Please try again.');
+        });
     }
 
     // Initialize hospital dashboard
     document.addEventListener('DOMContentLoaded', function() {
       loadHospitalProfile();
-      loadHospitalStats();
       loadActiveRequests();
       loadDonorResponses();
+      loadHospitalVerificationStatus();
 
       // Add event listener for post request button
       document.getElementById('post-request-btn').addEventListener('click', () => {
         document.getElementById('post-request-form').reset();
         delete document.getElementById('post-request-form').dataset.requestId;
         openModal('postRequestModal');
+      });
+
+      document.querySelectorAll('.filter-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          applyRequestFilter(btn.dataset.filter);
+        });
       });
     });
 
