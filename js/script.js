@@ -380,11 +380,17 @@ function initDashboard(userRole) {
 function initDonorDashboard() {
   setupRequestFilters();
   setupSearchFilter();
-  
+  if (currentUser && currentUser.id && currentUser.qr_token) {
+  generateDonorQRCode(currentUser.id, currentUser.qr_token);
+}
   // Load dashboard data
   loadDashboardData();
   loadVerificationStatus();
   loadRequests();
+  // Generate QR for donor
+if (userData.id && userData.qr_token) {
+  generateDonorQRCode(userData.id, userData.qr_token);
+}
   
   // Enable nearby requests
   const nearbyBtn = document.getElementById('nearby-btn');
@@ -414,7 +420,7 @@ function initHospitalDashboard() {
 // ========================================
 // 3.5 DASHBOARD DATA LOADING
 // ========================================
-
+let currentUser = null;
 async function loadDashboardData() {
   try {
     const response = await fetch('/api/profile', {
@@ -423,7 +429,7 @@ async function loadDashboardData() {
     
     if (response.ok) {
       const userData = await response.json();
-      
+      currentUser = userData;
       // Update user name
       const userNameElement = document.getElementById('user-name');
       if (userNameElement) {
@@ -624,6 +630,15 @@ function openQRScanner() {
   // For now, just show an alert. In real implementation, open camera
   showAlert('QR Scanner would open here. Scan at hospital for check-in.', 'info');
 }
+function openQRScanner() {
+  const modal = document.getElementById('qrScannerModal');
+  if (modal) {
+    openModal('qrScannerModal');
+    startQRScanner();
+  } else {
+    showAlert('QR Scanner not available', 'error');
+  }
+}
 
 function openKycPage() {
   window.location.href = 'hospital-kyc.html';
@@ -813,38 +828,164 @@ function submitPostRequest() {
 
 async function handleHospitalKyc(e) {
   e.preventDefault();
+  console.log('🏥 Hospital KYC form submitted');
   
-  const formData = new FormData(e.target);
-  const kycData = {
-    licenseNumber: formData.get('license-number'),
-    registrationNumber: formData.get('registration-number'),
-    registrationDate: formData.get('registration-date'),
-    issuingAuthority: formData.get('issuing-authority'),
-    hospitalAddress: formData.get('hospital-address'),
-    contactPerson: formData.get('contact-person')
-  };
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const alertDiv = document.getElementById('hospital-kyc-alert') || createHospitalKycAlert(form);
+  
+  // Validate checkboxes
+  const accuracyConfirmation = document.getElementById('accuracy-confirmation');
+  const complianceAgreement = document.getElementById('compliance-agreement');
+  
+  if (!accuracyConfirmation?.checked) {
+    console.warn('⚠️ Accuracy confirmation not checked');
+    showHospitalKycAlert(alertDiv, '❌ Please confirm the accuracy of information', 'error');
+    return;
+  }
+  
+  if (!complianceAgreement?.checked) {
+    console.warn('⚠️ Compliance agreement not checked');
+    showHospitalKycAlert(alertDiv, '❌ Please agree to compliance standards', 'error');
+    return;
+  }
+  
+  // Get file inputs and validate
+  const licenseDoc = document.getElementById('license-document');
+  const registrationCert = document.getElementById('registration-certificate');
+  
+  if (!licenseDoc?.files?.length) {
+    console.warn('⚠️ License document not selected');
+    showHospitalKycAlert(alertDiv, '❌ Please upload your medical license document', 'error');
+    return;
+  }
+  
+  if (!registrationCert?.files?.length) {
+    console.warn('⚠️ Registration certificate not selected');
+    showHospitalKycAlert(alertDiv, '❌ Please upload your registration certificate', 'error');
+    return;
+  }
+  
+  // Validate file sizes (max 5MB each)
+  const maxFileSize = 5 * 1024 * 1024;
+  if (licenseDoc.files[0].size > maxFileSize) {
+    console.warn('⚠️ License document too large');
+    showHospitalKycAlert(alertDiv, '❌ License document exceeds 5MB limit', 'error');
+    return;
+  }
+  
+  if (registrationCert.files[0].size > maxFileSize) {
+    console.warn('⚠️ Registration certificate too large');
+    showHospitalKycAlert(alertDiv, '❌ Registration certificate exceeds 5MB limit', 'error');
+    return;
+  }
   
   try {
-    const response = await fetch('/api/hospital/kyc/submit', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify(kycData)
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = '⏳ Submitting...';
+    }
+    
+    // Create FormData with all fields including files
+    const formData = new FormData();
+    
+    // Text fields
+    formData.append('licenseNumber', document.getElementById('license-number')?.value || '');
+    formData.append('registrationNumber', document.getElementById('registration-number')?.value || '');
+    formData.append('registrationDate', document.getElementById('registration-date')?.value || '');
+    formData.append('issuingAuthority', document.getElementById('issuing-authority')?.value || '');
+    formData.append('hospitalAddress', document.getElementById('hospital-address')?.value || '');
+    formData.append('contactPerson', document.getElementById('contact-person')?.value || '');
+    
+    // File fields
+    formData.append('licenseDocument', licenseDoc.files[0]);
+    formData.append('registrationCertificate', registrationCert.files[0]);
+    
+    // Optional blood bank certification
+    const bloodBankCert = document.getElementById('blood-bank-certification');
+    if (bloodBankCert?.files?.length) {
+      if (bloodBankCert.files[0].size <= maxFileSize) {
+        formData.append('bloodBankCertification', bloodBankCert.files[0]);
+      }
+    }
+    
+    console.log('📝 Form data prepared:', {
+      licenseNumber: formData.get('licenseNumber'),
+      registrationNumber: formData.get('registrationNumber'),
+      hasLicenseDoc: !!formData.get('licenseDocument'),
+      hasRegCert: !!formData.get('registrationCertificate'),
+      hasBloodBankCert: !!formData.get('bloodBankCertification')
     });
     
-    if (response.ok) {
-      showSuccessNotification('KYC documents submitted successfully! Your verification will be reviewed within 24-48 hours.');
+    console.log('🚀 Sending hospital KYC to /api/hospital/kyc/submit');
+
+    const response = await fetch('/api/hospital/kyc/submit', {
+      method: 'POST',
+      credentials: 'include',
+      body: formData
+    });
+    
+    console.log('📨 Response received:', { status: response.status, ok: response.ok });
+    
+    const result = await response.json();
+    console.log('📦 Response data:', result);
+    
+    if (response.ok && result.success) {
+      console.log('✅ Hospital KYC submitted successfully!');
+      showHospitalKycAlert(alertDiv, '✅ ' + (result.message || 'KYC documents submitted successfully! Your verification will be reviewed within 24-48 hours.'), 'success');
+      
       setTimeout(() => {
         window.location.href = 'hospital-dashboard.html';
       }, 2000);
     } else {
-      throw new Error('Failed to submit KYC');
+      console.warn('❌ Submission failed:', result.message);
+      showHospitalKycAlert(alertDiv, '❌ ' + (result.message || 'Failed to submit documents'), 'error');
     }
   } catch (error) {
-    console.error('Error submitting KYC:', error);
+    console.error('💥 Error submitting hospital KYC:', error);
+    showHospitalKycAlert(alertDiv, '❌ ' + (error.message || 'Failed to submit documents. Please try again.'), 'error');
     showErrorNotification('Failed to submit documents. Please try again.');
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit for Verification';
+    }
+  }
+}
+
+// Helper function to create alert div if missing
+function createHospitalKycAlert(form) {
+  const alertDiv = document.createElement('div');
+  alertDiv.id = 'hospital-kyc-alert';
+  alertDiv.style.display = 'none';
+  alertDiv.style.padding = '12px';
+  alertDiv.style.marginBottom = '16px';
+  alertDiv.style.borderRadius = '4px';
+  alertDiv.style.border = '1px solid';
+  alertDiv.style.fontWeight = '500';
+  form.parentElement.insertBefore(alertDiv, form);
+  return alertDiv;
+}
+
+// Helper function to show hospital KYC alert
+function showHospitalKycAlert(alertDiv, message, type) {
+  if (!alertDiv) return;
+  
+  alertDiv.textContent = message;
+  alertDiv.style.display = 'block';
+  
+  if (type === 'error') {
+    alertDiv.style.backgroundColor = '#fee';
+    alertDiv.style.borderColor = '#fcc';
+    alertDiv.style.color = '#c00';
+  } else if (type === 'success') {
+    alertDiv.style.backgroundColor = '#efe';
+    alertDiv.style.borderColor = '#cfc';
+    alertDiv.style.color = '#080';
+  } else {
+    alertDiv.style.backgroundColor = '#eef';
+    alertDiv.style.borderColor = '#ccf';
+    alertDiv.style.color = '#008';
   }
 }
 
@@ -898,58 +1039,71 @@ function deleteRequest(requestId) {
 // ========================================
 
 function setupFormHandlers() {
+  console.log('🔧 Setting up form handlers...');
+  
   // Donor signup form
   const donorSignupForm = document.getElementById('donor-signup-form');
   if (donorSignupForm) {
     donorSignupForm.addEventListener('submit', handleDonorSignup);
+    console.log('✅ Donor signup form handler attached');
   }
   
   // Hospital signup form
   const hospitalSignupForm = document.getElementById('hospital-signup-form');
   if (hospitalSignupForm) {
     hospitalSignupForm.addEventListener('submit', handleHospitalSignup);
+    console.log('✅ Hospital signup form handler attached');
   }
   
   // Donor login form
   const donorLoginForm = document.getElementById('donor-login-form');
   if (donorLoginForm) {
     donorLoginForm.addEventListener('submit', handleDonorLogin);
+    console.log('✅ Donor login form handler attached');
   }
   
   // Hospital login form
   const hospitalLoginForm = document.getElementById('hospital-login-form');
   if (hospitalLoginForm) {
     hospitalLoginForm.addEventListener('submit', handleHospitalLogin);
+    console.log('✅ Hospital login form handler attached');
+  } else {
+    console.warn('⚠️ Hospital login form NOT found in DOM');
   }
   
   // Verification form
   const verificationForm = document.getElementById('verification-form');
   if (verificationForm) {
     verificationForm.addEventListener('submit', handleVerification);
+    console.log('✅ Verification form handler attached');
   }
   
   // Hospital KYC form
   const hospitalKycForm = document.getElementById('hospital-kyc-form');
   if (hospitalKycForm) {
     hospitalKycForm.addEventListener('submit', handleHospitalKyc);
+    console.log('✅ Hospital KYC form handler attached');
   }
   
   // OTP verification form
   const otpForm = document.getElementById('otp-form');
   if (otpForm) {
     otpForm.addEventListener('submit', handleOtpVerification);
+    console.log('✅ OTP form handler attached');
   }
   
   // Post blood request form
   const requestForm = document.getElementById('post-request-form');
   if (requestForm) {
     requestForm.addEventListener('submit', handlePostRequest);
+    console.log('✅ Post request form handler attached');
   }
   
   // Profile form
   const profileForm = document.getElementById('profile-form');
   if (profileForm) {
     profileForm.addEventListener('submit', handleProfileUpdate);
+    console.log('✅ Profile form handler attached');
   }
 }
 
@@ -1151,13 +1305,26 @@ async function handleDonorLogin(e) {
 
 async function handleHospitalLogin(e) {
   e.preventDefault();
+  console.log('🔵 Hospital login form submitted');
   
   const identifier = (document.getElementById('login-identifier')?.value || '').trim();
-  const password = document.getElementById('password')?.value;
-  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const password = document.getElementById('hospital-password')?.value;
+  const submitBtn = document.getElementById('hospital-login-btn') || e.target.querySelector('button[type="submit"]');
+  const alertDiv = document.getElementById('login-alert');
+  
+  console.log('📝 Form data:', { identifier, passwordLength: password?.length });
   
   if (!identifier || !password) {
-    showErrorNotification('Please fill in all fields');
+    console.warn('⚠️ Missing fields: identifier or password');
+    const msg = 'Please fill in all fields';
+    if (alertDiv) {
+      alertDiv.textContent = '❌ ' + msg;
+      alertDiv.style.display = 'block';
+      alertDiv.style.backgroundColor = '#fee';
+      alertDiv.style.borderColor = '#fcc';
+      alertDiv.style.color = '#c00';
+    }
+    showErrorNotification(msg);
     return;
   }
   
@@ -1166,6 +1333,8 @@ async function handleHospitalLogin(e) {
       submitBtn.disabled = true;
       submitBtn.textContent = 'Logging in...';
     }
+    
+    console.log('🚀 Sending login request to /api/login/hospital');
 
     const response = await fetch('/api/login/hospital', {
       method: 'POST',
@@ -1176,19 +1345,52 @@ async function handleHospitalLogin(e) {
       body: JSON.stringify({ identifier, password })
     });
     
+    console.log('📨 Response received:', { status: response.status, ok: response.ok });
+    
     const result = await response.json();
+    console.log('📦 Response data:', result);
     
     if (response.ok && result.success) {
-      showSuccessNotification('Login successful');
+      console.log('✅ Login successful!');
+      const msg = 'Login successful';
+      if (alertDiv) {
+        alertDiv.textContent = '✅ ' + msg;
+        alertDiv.style.display = 'block';
+        alertDiv.style.backgroundColor = '#efe';
+        alertDiv.style.borderColor = '#cfc';
+        alertDiv.style.color = '#080';
+      }
+      showSuccessNotification(msg);
+      
+      const redirectUrl = result.redirect || '/hospital-dashboard';
+      console.log('🔄 Redirecting to:', redirectUrl);
+      
       setTimeout(() => {
-        window.location.href = result.redirect || '/hospital-dashboard';
+        window.location.href = redirectUrl;
       }, 1000);
     } else {
-      showErrorNotification(result.message || 'Login failed');
+      console.warn('❌ Login failed:', result.message);
+      const msg = result.message || 'Login failed';
+      if (alertDiv) {
+        alertDiv.textContent = '❌ ' + msg;
+        alertDiv.style.display = 'block';
+        alertDiv.style.backgroundColor = '#fee';
+        alertDiv.style.borderColor = '#fcc';
+        alertDiv.style.color = '#c00';
+      }
+      showErrorNotification(msg);
     }
   } catch (error) {
-    console.error('Error logging in:', error);
-    showErrorNotification('Login failed. Please try again.');
+    console.error('💥 Error logging in:', error);
+    const msg = 'Login failed. Please try again.';
+    if (alertDiv) {
+      alertDiv.textContent = '❌ ' + msg;
+      alertDiv.style.display = 'block';
+      alertDiv.style.backgroundColor = '#fee';
+      alertDiv.style.borderColor = '#fcc';
+      alertDiv.style.color = '#c00';
+    }
+    showErrorNotification(msg);
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
@@ -1288,6 +1490,10 @@ function toggleSidebar() {
 // ========================================
 
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('=====================================');
+  console.log('✨ LifeLink Script Loaded');
+  console.log('=====================================');
+  
   // Initialize theme
   initializeTheme();
   setupThemeToggle();
@@ -1321,7 +1527,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
-  console.log('LifeLink UI initialized');
+  console.log('✅ LifeLink UI initialized successfully');
+  console.log('=====================================');
 });
 
 // ========================================
@@ -1352,6 +1559,81 @@ function getUrgencyEmoji(urgency) {
   }
 }
 
+
+// ========================================
+// 14. QR CODE GENERATION (DONOR SIDE)
+// ========================================
+
+function generateDonorQRCode(donorId, token) {
+  const qrContainer = document.getElementById('donor-qrcode');
+  if (!qrContainer) return;
+
+  qrContainer.innerHTML = '';
+
+  const qrData = JSON.stringify({
+    donor_id: donorId,
+    token: token
+  });
+
+  if (typeof QRCode !== 'undefined') {
+    new QRCode(qrContainer, {
+      text: qrData,
+      width: 200,
+      height: 200
+    });
+  } else {
+    console.warn('QRCode library not loaded');
+  }
+}
+
+// ========================================
+// 15. QR CODE SCANNER (HOSPITAL)
+// ========================================
+
+let qrScanner = null;
+
+function startQRScanner() {
+  const reader = document.getElementById('qr-reader');
+  if (!reader) return;
+
+  if (typeof Html5Qrcode === 'undefined') {
+    showErrorNotification('QR Scanner library not loaded');
+    return;
+  }
+
+  qrScanner = new Html5Qrcode("qr-reader");
+
+  qrScanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    onScanSuccess
+  ).catch(err => {
+    console.error(err);
+    showErrorNotification('Camera access failed');
+  });
+}
+
+function stopQRScanner() {
+  if (qrScanner) {
+    qrScanner.stop()
+      .then(() => qrScanner.clear())
+      .catch(err => console.error(err));
+  }
+}
+
+function onScanSuccess(decodedText) {
+  console.log("Scanned QR:", decodedText);
+
+  stopQRScanner();
+  closeModal('qrScannerModal');
+
+  try {
+    const data = JSON.parse(decodedText);
+    verifyDonorQR(data);
+  } catch (e) {
+    showErrorNotification('Invalid QR Code');
+  }
+}
 // ========================================
 // OTP AUTHENTICATION SYSTEM
 // ========================================
@@ -1907,6 +2189,532 @@ async function approveKYC(phone) {
 /**
  * Reject KYC for a user (admin only)
  */
+
+// ============================================
+// TRANSACTIONAL QR VERIFICATION SYSTEM
+// ============================================
+
+/**
+ * Check wallet balance for current donor
+ * Returns the current balance or 0 if not available
+ */
+async function getWalletBalance() {
+  try {
+    const response = await fetch('/api/wallet/balance');
+    const data = await response.json();
+    
+    if (data.success) {
+      return data.balance || 0;
+    }
+  } catch (error) {
+    console.error('❌ Error getting wallet balance:', error);
+  }
+  
+  return 0;
+}
+
+/**
+ * Check if wallet is locked (balance = 0)
+ * Adds visual overlay to disable donation features
+ */
+async function checkWalletLock() {
+  console.log('🔒 Checking wallet lock status...');
+  const balance = await getWalletBalance();
+  const walletStatus = document.getElementById('wallet-balance');
+  
+  if (walletStatus) {
+    walletStatus.textContent = `Balance: ${balance} points`;
+  }
+  
+  // If balance is 0, apply overlay
+  if (balance === 0) {
+    console.log('🔒 Wallet is locked (balance = 0)');
+    applyWalletLock();
+  } else {
+    console.log('✅ Wallet is unlocked (balance = ' + balance + ')');
+    removeWalletLock();
+  }
+}
+
+/**
+ * Apply visual lock to wallet - disable donation features
+ */
+function applyWalletLock() {
+  // Check if overlay already exists
+  let overlay = document.getElementById('wallet-lock-overlay');
+  
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'wallet-lock-overlay';
+    overlay.className = 'wallet-overlay active';
+    overlay.innerHTML = `
+      <div class="wallet-lock-message">
+        <div class="lock-icon">🔒</div>
+        <h3>Wallet Locked</h3>
+        <p>Donate blood to unlock wallet features</p>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  } else {
+    overlay.classList.add('active');
+  }
+  
+  // Apply blur to donation-related elements
+  const donationElements = document.querySelectorAll('[data-donation], .donation-area, .request-details');
+  donationElements.forEach(el => {
+    el.classList.add('wallet-locked');
+  });
+}
+
+/**
+ * Remove wallet lock overlay - enable donation features
+ */
+function removeWalletLock() {
+  const overlay = document.getElementById('wallet-lock-overlay');
+  if (overlay) {
+    overlay.classList.remove('active');
+  }
+  
+  // Remove blur from donation elements
+  const donationElements = document.querySelectorAll('[data-donation], .donation-area, .request-details');
+  donationElements.forEach(el => {
+    el.classList.remove('wallet-locked');
+  });
+}
+
+/**
+ * Initiate a donation transaction
+ * Creates a transaction and generates QR code for hospital scanning
+ * 
+ * @param {number} amount - Amount to donate (blood points)
+ * @param {number} hospitalId - Hospital ID receiving the donation
+ * @returns {boolean} - Success status
+ */
+async function initiateTransaction(amount, hospitalId) {
+  console.log('💳 Initiating transaction:', { amount, hospitalId });
+  
+  try {
+    // Validate inputs
+    if (!amount || amount <= 0) {
+      showErrorNotification('Invalid donation amount');
+      return false;
+    }
+    
+    if (!hospitalId) {
+      showErrorNotification('Hospital not specified');
+      return false;
+    }
+    
+    // Check wallet status first
+    const balance = await getWalletBalance();
+    if (balance === 0) {
+      showErrorNotification('🔒 Wallet is locked. Please donate blood first.');
+      return false;
+    }
+    
+    // Create transaction on backend
+    const response = await fetch('/api/create-transaction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: amount,
+        hospital_id: hospitalId,
+        metadata: {
+          initiated_at: new Date().toISOString()
+        }
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      showErrorNotification(data.message || 'Failed to create transaction');
+      return false;
+    }
+    
+    console.log('✅ Transaction created:', data);
+    
+    // Generate QR code with the token
+    generateQRCode(data.token, data.amount);
+    
+    return true;
+    
+  } catch (error) {
+    console.error('❌ Error initiating transaction:', error);
+    showErrorNotification('Error creating transaction');
+    return false;
+  }
+}
+
+/**
+ * Generate QR code for transaction verification
+ * Display in modal for hospital to scan
+ * 
+ * @param {string} token - 32-character transaction token
+ * @param {number} amount - Donation amount
+ */
+function generateQRCode(token, amount) {
+  console.log('📲 Generating QR code for token:', token.substring(0, 8) + '...');
+  
+  // Create modal for QR display
+  let modal = document.getElementById('qr-modal');
+  
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'qr-modal';
+    modal.className = 'qr-modal';
+    document.body.appendChild(modal);
+  }
+  
+  // Get base URL for QR (current server)
+  const baseUrl = window.location.origin; // e.g., http://localhost:8500
+  const verifyUrl = `${baseUrl}/api/verify/${token}`;
+  
+  // Clear previous QR
+  const qrContainer = modal.querySelector('.qr-container') || createQRContainer(modal);
+  qrContainer.innerHTML = '';
+  
+  // Generate QR using QRCode.js library
+  // First, load the library if not already loaded
+  if (typeof QRCode === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    script.onload = () => {
+      generateQRWithLibrary(qrContainer, verifyUrl, token, amount);
+    };
+    document.head.appendChild(script);
+  } else {
+    generateQRWithLibrary(qrContainer, verifyUrl, token, amount);
+  }
+  
+  // Show modal
+  modal.classList.add('active');
+}
+
+/**
+ * Generate QR code using QRCode.js library
+ */
+function generateQRWithLibrary(container, url, token, amount) {
+  console.log('🎨 Rendering QR code canvas');
+  
+  // Clear container
+  container.innerHTML = '';
+  
+  // Create QR code
+  new QRCode(container, {
+    text: url,
+    width: 200,
+    height: 200,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+  
+  // Add transaction details below QR
+  const details = document.createElement('div');
+  details.className = 'qr-details';
+  details.innerHTML = `
+    <p><strong>Amount:</strong> ${amount} points</p>
+    <p><strong>Status:</strong> Waiting for hospital to scan...</p>
+    <p style="font-size: 12px; color: #999;">Token: ${token.substring(0, 8)}...</p>
+  `;
+  
+  container.appendChild(details);
+  
+  // Setup polling to check verification status
+  pollTransactionStatus(token);
+}
+
+/**
+ * Create QR modal container structure
+ */
+function createQRContainer(modal) {
+  modal.innerHTML = `
+    <div class="qr-modal-content">
+      <button class="qr-close" onclick="document.getElementById('qr-modal').classList.remove('active')">✕</button>
+      <h2>Scan to Verify Donation</h2>
+      <div class="qr-container"></div>
+      <p class="qr-instructions">Ask the hospital staff to scan this QR code to verify your donation</p>
+    </div>
+  `;
+  return modal.querySelector('.qr-container');
+}
+
+/**
+ * Poll transaction status until verified or timeout
+ * @param {string} token - Transaction token
+ */
+function pollTransactionStatus(token) {
+  console.log('🔄 Starting transaction status poll for:', token.substring(0, 8) + '...');
+  
+  let pollCount = 0;
+  const maxPolls = 120; // 2 minutes with 1-second intervals
+  
+  const pollInterval = setInterval(async () => {
+    pollCount++;
+    
+    try {
+      const response = await fetch(`/api/transaction/${token}`);
+      const data = await response.json();
+      
+      if (data.success && data.status === 'completed') {
+        console.log('✅ Transaction verified!');
+        clearInterval(pollInterval);
+        
+        // Close QR modal
+        const modal = document.getElementById('qr-modal');
+        if (modal) {
+          modal.classList.remove('active');
+        }
+        
+        // Refresh wallet balance
+        setTimeout(() => {
+          checkWalletLock();
+        }, 1000);
+        
+        // Show success notification
+        showSuccessNotification('✅ Donation verified! Wallet updated.');
+      }
+    } catch (error) {
+      console.error('Error polling transaction status:', error);
+    }
+    
+    // Timeout after 2 minutes
+    if (pollCount >= maxPolls) {
+      clearInterval(pollInterval);
+      console.warn('⏰ Transaction verification timeout');
+    }
+  }, 1000); // Poll every 1 second
+}
+
+/**
+ * Close QR modal
+ */
+function closeQRModal() {
+  const modal = document.getElementById('qr-modal');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+}
+
+// ============================================
+// EMAIL OTP AUTHENTICATION SYSTEM
+// ============================================
+
+/**
+ * Email OTP - Request OTP to be sent to email
+ * @param {string} email - User email address
+ * @returns {Promise<boolean>} Success status
+ */
+async function sendEmailOTP(email) {
+  console.log('📧 Requesting OTP for email:', email);
+  
+  try {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.warn('⚠️ Invalid email format:', email);
+      showErrorNotification('Please enter a valid email address');
+      return false;
+    }
+
+    // Show loading state
+    const sendBtn = document.getElementById('send-otp-btn');
+    if (sendBtn) {
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending...';
+    }
+
+    // Call API
+    const response = await fetch('/api/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.toLowerCase() })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      console.log('✅ OTP sent successfully to:', email);
+      showSuccessNotification('OTP sent to your email address. Check your inbox!');
+      
+      // Show OTP input field
+      const otpInput = document.getElementById('otp-input');
+      if (otpInput) {
+        otpInput.style.display = 'block';
+        otpInput.focus();
+      }
+      
+      // Start timer for resend button
+      startResendTimer();
+      
+      return true;
+    } else {
+      console.error('❌ Failed to send OTP:', data.message);
+      showErrorNotification(data.message || 'Failed to send OTP. Please try again.');
+      return false;
+    }
+
+  } catch (error) {
+    console.error('💥 Error sending OTP:', error);
+    showErrorNotification('An error occurred. Please try again.');
+    return false;
+  } finally {
+    // Reset button state
+    const sendBtn = document.getElementById('send-otp-btn');
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'Send OTP';
+    }
+  }
+}
+
+/**
+ * Email OTP - Verify OTP code
+ * @param {string} email - User email address
+ * @param {string} otp - 6-digit OTP code
+ * @returns {Promise<boolean>} Verification success
+ */
+async function verifyEmailOTP(email, otp) {
+  console.log('🔍 Verifying OTP for:', email);
+  
+  try {
+    // Validate OTP format (6 digits)
+    if (!/^\d{6}$/.test(otp.trim())) {
+      console.warn('⚠️ Invalid OTP format. Expected 6 digits.');
+      showErrorNotification('OTP must be 6 digits');
+      return false;
+    }
+
+    // Show loading state
+    const verifyBtn = document.getElementById('verify-otp-btn');
+    if (verifyBtn) {
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = 'Verifying...';
+    }
+
+    // Call API
+    const response = await fetch('/api/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: email.toLowerCase(),
+        otp: otp.trim()
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      console.log('✅ OTP verified successfully');
+      showSuccessNotification('Email verified successfully!');
+      
+      // Store verified email in session/local storage
+      sessionStorage.setItem('verifiedEmail', email.toLowerCase());
+      
+      return true;
+    } else {
+      console.warn('❌ OTP verification failed:', data.message);
+      showErrorNotification(data.message || 'Invalid OTP. Please try again.');
+      return false;
+    }
+
+  } catch (error) {
+    console.error('💥 Error verifying OTP:', error);
+    showErrorNotification('An error occurred. Please try again.');
+    return false;
+  } finally {
+    // Reset button state
+    const verifyBtn = document.getElementById('verify-otp-btn');
+    if (verifyBtn) {
+      verifyBtn.disabled = false;
+      verifyBtn.textContent = 'Verify OTP';
+    }
+  }
+}
+
+/**
+ * Email OTP - Resend OTP to email
+ * @param {string} email - User email address
+ * @returns {Promise<boolean>} Success status
+ */
+async function resendEmailOTP(email) {
+  console.log('🔄 Resending OTP for:', email);
+  
+  try {
+    const response = await fetch('/api/resend-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.toLowerCase() })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      console.log('✅ OTP resent successfully');
+      showSuccessNotification('OTP resent to your email address!');
+      startResendTimer(); // Reset timer
+      return true;
+    } else {
+      console.error('❌ Failed to resend OTP:', data.message);
+      showErrorNotification(data.message || 'Failed to resend OTP.');
+      return false;
+    }
+
+  } catch (error) {
+    console.error('💥 Error resending OTP:', error);
+    showErrorNotification('An error occurred. Please try again.');
+    return false;
+  }
+}
+
+/**
+ * Start countdown timer for resend OTP button
+ * Disables resend for 60 seconds
+ */
+function startResendTimer() {
+  const resendBtn = document.getElementById('resend-otp-btn');
+  if (!resendBtn) return;
+
+  resendBtn.disabled = true;
+  let secondsLeft = 60;
+
+  const timerInterval = setInterval(() => {
+    secondsLeft--;
+    if (secondsLeft <= 0) {
+      clearInterval(timerInterval);
+      resendBtn.disabled = false;
+      resendBtn.textContent = 'Resend OTP';
+    } else {
+      resendBtn.textContent = `Resend OTP (${secondsLeft}s)`;
+    }
+  }, 1000);
+}
+
+/**
+ * Check if email has been verified (in session)
+ * @returns {boolean} Verification status
+ */
+function isEmailVerified() {
+  return !!sessionStorage.getItem('verifiedEmail');
+}
+
+/**
+ * Get verified email from session
+ * @returns {string|null} Email address or null
+ */
+function getVerifiedEmail() {
+  return sessionStorage.getItem('verifiedEmail');
+}
+
+/**
+ * Clear email verification from session
+ */
+function clearEmailVerification() {
+  sessionStorage.removeItem('verifiedEmail');
+  console.log('🧹 Email verification cleared');
+}
+
 async function rejectKYC(phone, reason = '') {
   try {
     const response = await fetch('/api/kyc/reject', {
@@ -1976,3 +2784,103 @@ document.addEventListener('DOMContentLoaded', () => {
   displayKYCStatus();
 });
 
+
+// ==============================
+// GET ALL PENDING KYC REQUESTS
+// ==============================
+app.get('/api/kyc/requests', async (req, res) => {
+  try {
+    const users = await User.find({ kyc_status: 'pending' });
+
+    const requests = users.map(user => ({
+      phone: user.phone,
+      bloodGroup: user.bloodGroup,
+      submittedAt: user.createdAt,
+      idCardPath: user.idCardPath
+    }));
+
+    res.json({ success: true, requests });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
+// ==============================
+// APPROVE KYC
+// ==============================
+app.post('/api/kyc/approve', async (req, res) => {
+  try {
+    const { phone } = req.body;
+
+    await User.findOneAndUpdate(
+      { phone },
+      {
+        kyc_status: 'verified',
+        kyc_verified: true,
+        kyc_pending: false
+      }
+    );
+
+    res.json({ success: true, message: 'KYC approved' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false });
+  }
+});
+
+
+// ==============================
+// REJECT KYC
+// ==============================
+app.post('/api/kyc/reject', async (req, res) => {
+  try {
+    const { phone, reason } = req.body;
+
+    await User.findOneAndUpdate(
+      { phone },
+      {
+        kyc_status: 'rejected',
+        kyc_verified: false,
+        kyc_pending: false,
+        rejectionReason: reason || 'Invalid documents'
+      }
+    );
+
+    res.json({ success: true, message: 'KYC rejected' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false });
+  }
+});
+
+// ========================================
+// 16. VERIFY DONOR QR
+// ========================================
+
+async function verifyDonorQR(data) {
+  try {
+    const response = await fetch('/api/verify-donor-qr', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      showSuccessNotification(`Donor Verified: ${result.name}`);
+
+      // OPTIONAL: update UI
+      showAlert(`Blood Group: ${result.bloodGroup}`, 'success');
+
+    } else {
+      showErrorNotification(result.message || 'Verification failed');
+    }
+
+  } catch (error) {
+    console.error(error);
+    showErrorNotification('Server error');
+  }
+}

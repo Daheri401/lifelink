@@ -79,6 +79,19 @@
           </div>
         </div>
 
+        <!-- PENDING KYC REQUESTS -->
+        <div class="card">
+          <div class="card-header">
+            <h3>📋 Pending KYC Requests</h3>
+            <span class="badge" id="kyc-count" style="background-color: #e74c3c; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">0</span>
+          </div>
+          <div class="card-body">
+            <div id="pending-kyc-list">
+              <!-- Pending KYC requests will be loaded here -->
+            </div>
+          </div>
+        </div>
+
         <!-- HOSPITAL VERIFICATION -->
         <div class="card">
           <div class="card-header">
@@ -105,9 +118,143 @@
       </main>
     </div>
   </div>
+<script src="../js/qrcode.min.js">
 
+</script>
   <script src="/js/script.js"></script>
   <script>
+    // ========================================
+    // PENDING KYC REQUESTS MANAGEMENT
+    // ========================================
+
+    async function loadPendingKYCRequests() {
+      try {
+        const response = await fetch('/api/kyc/requests');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        const list = document.getElementById('pending-kyc-list');
+        const kycCount = document.getElementById('kyc-count');
+        
+        if (!data.success || !data.requests || data.requests.length === 0) {
+          list.innerHTML = '<p class="text-muted">✓ No pending KYC requests</p>';
+          kycCount.textContent = '0';
+          return;
+        }
+
+        kycCount.textContent = data.requests.length;
+
+        list.innerHTML = data.requests.map(request => {
+          return `
+          <div class="kyc-request-card" style="
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+          ">
+            <div style="flex: 1; min-width: 200px;">
+              <div style="margin-bottom: 8px;">
+                <strong style="color: #2c3e50;">📞 Phone:</strong>
+                <span style="color: #555; font-family: monospace;">****${request.phone}</span>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <strong style="color: #2c3e50;">🩸 Blood Group:</strong>
+                <span style="color: #555; background-color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: bold;">${request.bloodGroup}</span>
+              </div>
+              <div style="margin-bottom: 8px;">
+                <strong style="color: #2c3e50;">📅 Submitted:</strong>
+                <span style="color: #555;">${new Date(request.submittedAt).toLocaleDateString()} ${new Date(request.submittedAt).toLocaleTimeString()}</span>
+              </div>
+              <div style="margin-top: 12px;">
+                <img src="${request.idCardPath}" alt="KYC Document" style="width: 180px; max-height: 220px; border-radius: 6px; border: 1px solid #ccc; object-fit: cover;" onerror="this.src='/images/placeholder.png'; this.title='Failed to load image';" />
+                <br />
+                <a href="${request.idCardPath}" target="_blank" style="color: #3498db; text-decoration: none; font-size: 12px; margin-top: 6px; display: inline-block;" title="Open full size document">
+                  🔍 View Full Size
+                </a>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; flex-direction: column;">
+              <button class="btn btn-success btn-small" onclick="approveKYC('${request.phoneFullForAdmin}')">✓ Approve</button>
+              <button class="btn btn-danger btn-small" onclick="openRejectModal('${request.phoneFullForAdmin}')">✗ Reject</button>
+            </div>
+          </div>
+        `;
+        }).join('');
+      } catch (error) {
+        document.getElementById('pending-kyc-list').innerHTML = `<p class="text-muted" style="color: #e74c3c;">❌ Error loading requests: ${error.message}</p>`;
+      }
+    }
+
+    async function approveKYC(phone) {
+      if (!confirm('Are you sure you want to approve this KYC submission?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/kyc/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          showSuccessNotification(`✓ KYC approved successfully for ${phone.slice(-4)}`);
+          loadPendingKYCRequests(); // Refresh the list
+        } else {
+          showErrorNotification('Error: ' + result.message);
+        }
+      } catch (error) {
+        showErrorNotification('Failed to approve KYC. Please try again.');
+      }
+    }
+
+    function openRejectModal(phone) {
+      const reason = prompt('Enter rejection reason (leave blank for default message):');
+      if (reason !== null) {
+        rejectKYC(phone, reason);
+      }
+    }
+
+    async function rejectKYC(phone, reason) {
+      try {
+        const response = await fetch('/api/kyc/reject', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            phone,
+            reason: reason || 'Documents did not meet verification requirements'
+          })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          showAlert(`✗ KYC rejected for ${phone.slice(-4)}. User can resubmit.`, 'warning');
+          loadPendingKYCRequests(); // Refresh the list
+        } else {
+          showErrorNotification('Error: ' + result.message);
+        }
+      } catch (error) {
+        showErrorNotification('Failed to reject KYC. Please try again.');
+      }
+    }
+
+    // ========================================
+    // EXISTING DASHBOARD FUNCTIONS
+    // ========================================
+
     async function loadStats() {
       try {
         const response = await fetch('/api/stats');
@@ -204,6 +351,7 @@
 
     // Load all data on page load
     loadStats();
+    loadPendingKYCRequests();
     loadHospitalVerifications();
     loadRecentRequests();
   </script>

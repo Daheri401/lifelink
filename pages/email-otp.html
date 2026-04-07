@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Verification - LifeLink</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .email-otp-container {
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 30px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .email-otp-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .email-otp-header h2 {
+      color: var(--text-dark);
+      font-size: 24px;
+      margin: 0 0 10px 0;
+    }
+
+    .email-otp-header p {
+      color: var(--text-light);
+      margin: 0;
+    }
+
+    .email-otp-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group label {
+      color: var(--text-dark);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .form-group input {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--text-dark);
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.1);
+    }
+
+    .form-group input:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .button-group button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: var(--border);
+      color: var(--text-dark);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #d4d8dd;
+    }
+
+    .btn-secondary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .otp-input-section {
+      display: none;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .otp-input-section.active {
+      display: block;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .info-message {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 15px;
+      display: none;
+    }
+
+    .info-message.success {
+      display: block;
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .info-message.error {
+      display: block;
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .info-message.info {
+      display: block;
+      background: #dbeafe;
+      color: #0c4a6e;
+      border: 1px solid #bfdbfe;
+    }
+
+    .divider {
+      text-align: center;
+      margin: 20px 0;
+      color: var(--text-light);
+      font-size: 13px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      display: inline-block;
+      width: 45%;
+      height: 1px;
+      background: var(--border);
+      vertical-align: middle;
+    }
+
+    .divider::before {
+      margin-right: 10px;
+    }
+
+    .divider::after {
+      margin-left: 10px;
+    }
+
+    .timer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-light);
+      margin-top: 10px;
+    }
+
+    .timer strong {
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body class="login-page">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="/" class="logo">
+          <span class="logo-text">LifeLink</span>
+        </a>
+        <button id="theme-toggle" title="Toggle dark/light theme">🌙</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div class="container">
+    <div class="email-otp-container">
+      <div class="email-otp-header">
+        <h2>📧 Email Verification</h2>
+        <p>Verify your email to continue with LifeLink</p>
+      </div>
+
+      <div id="message-alert" class="info-message"></div>
+
+      <form class="email-otp-form" onsubmit="handleEmailOTPForm(event)">
+        
+        <!-- Step 1: Email Input -->
+        <div id="email-section">
+          <div class="form-group">
+            <label for="email-input">Your Email Address</label>
+            <input
+              type="email"
+              id="email-input"
+              placeholder="Enter your email address"
+              required
+              autocomplete="email"
+            />
+          </div>
+
+          <button type="button" id="send-otp-btn" class="btn-primary" style="width: 100%; padding: 12px;">
+            📧 Send OTP to Email
+          </button>
+        </div>
+
+        <!-- Step 2: OTP Input -->
+        <div id="otp-input-section" class="otp-input-section">
+          <div class="info-message info">
+            ℹ️ We've sent a 6-digit code to your email. Check your inbox and spam folder.
+          </div>
+
+          <div class="form-group">
+            <label for="otp-input">Enter OTP Code</label>
+            <input
+              type="text"
+              id="otp-input"
+              placeholder="000000"
+              maxlength="6"
+              pattern="[0-9]{6}"
+              inputmode="numeric"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="button-group">
+            <button type="button" id="verify-otp-btn" class="btn-primary">
+              ✓ Verify OTP
+            </button>
+            <button type="button" id="resend-otp-btn" class="btn-secondary">
+              🔄 Resend OTP
+            </button>
+          </div>
+
+          <div class="timer">
+            <span>OTP expires in <strong id="expiry-timer">5:00</strong> minutes</span>
+          </div>
+        </div>
+      </form>
+
+      <div class="divider">or</div>
+
+      <div style="text-align: center;">
+        <p style="color: var(--text-light); font-size: 13px; margin-bottom: 15px;">
+          Already have an account?
+        </p>
+        <a href="/login" class="btn btn-secondary" style="display: inline-block; padding: 10px 20px; text-decoration: none;">
+          Back to Login
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="/js/script.js"></script>
+  <script>
+    // Initialize theme
+    window.addEventListener('DOMContentLoaded', () => {
+      initializeTheme();
+      setupThemeToggle();
+      setupEmailOTPForm();
+    });
+
+    /**
+     * Setup email OTP form event listeners
+     */
+    function setupEmailOTPForm() {
+      const sendBtn = document.getElementById('send-otp-btn');
+      const verifyBtn = document.getElementById('verify-otp-btn');
+      const resendBtn = document.getElementById('resend-otp-btn');
+      const emailInput = document.getElementById('email-input');
+      const otpInput = document.getElementById('otp-input');
+
+      // Send OTP button
+      if (sendBtn) {
+        sendBtn.addEventListener('click', async () => {
+          const email = emailInput.value.trim();
+          const success = await sendEmailOTP(email);
+          
+          if (success) {
+            // Show OTP input section
+            const otpSection = document.getElementById('otp-input-section');
+            if (otpSection) {
+              otpSection.classList.add('active');
+              otpInput?.focus();
+            }
+            // Disable email input
+            emailInput.disabled = true;
+            sendBtn.disabled = true;
+          }
+        });
+      }
+
+      // Verify OTP button
+      if (verifyBtn) {
+        verifyBtn.addEventListener('click', async () => {
+          const email = emailInput.value.trim();
+          const otp = otpInput.value.trim();
+          const success = await verifyEmailOTP(email, otp);
+          
+          if (success) {
+            // Redirect or allow next step
+            showSuccessMessage('Email verified! Redirecting...');
+            setTimeout(() => {
+              // You can redirect to registration or login page
+              window.location.href = '/donor-signup';
+            }, 2000);
+          }
+        });
+      }
+
+      // Resend OTP button
+      if (resendBtn) {
+        resendBtn.addEventListener('click', async () => {
+          const email = emailInput.value.trim();
+          await resendEmailOTP(email);
+        });
+      }
+
+      // OTP input auto-submit when 6 digits entered
+      if (otpInput) {
+        otpInput.addEventListener('input', (e) => {
+          if (e.target.value.length === 6) {
+            // Auto-verify when 6 digits entered
+            const email = emailInput.value.trim();
+            verifyEmailOTP(email, e.target.value);
+          }
+        });
+      }
+    }
+
+    /**
+     * Handle form submission
+     */
+    function handleEmailOTPForm(event) {
+      event.preventDefault();
+      // Form is handled by individual button clicks
+    }
+
+    /**
+     * Show success message
+     */
+    function showSuccessMessage(message) {
+      const alert = document.getElementById('message-alert');
+      if (alert) {
+        alert.className = 'info-message success';
+        alert.textContent = '✓ ' + message;
+      }
+    }
+
+    /**
+     * Show error message
+     */
+    function showErrorMessage(message) {
+      const alert = document.getElementById('message-alert');
+      if (alert) {
+        alert.className = 'info-message error';
+        alert.textContent = '✗ ' + message;
+      }
+    }
+
+    /**
+     * Override notification functions to use custom message display
+     */
+    function showSuccessNotification(message) {
+      showSuccessMessage(message);
+    }
+
+    function showErrorNotification(message) {
+      showErrorMessage(message);
+    }
+
+    /**
+     * Expiry timer countdown
+     * OTP expires in 5 minutes
+     */
+    let expiryInterval;
+    function startExpiryTimer() {
+      const timerElement = document.getElementById('expiry-timer');
+      if (!timerElement) return;
+
+      let secondsLeft = 5 * 60; // 5 minutes
+      
+      const updateTimer = () => {
+        const minutes = Math.floor(secondsLeft / 60);
+        const seconds = secondsLeft % 60;
+        timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        if (secondsLeft <= 0) {
+          clearInterval(expiryInterval);
+          showErrorMessage('OTP has expired. Please request a new one.');
+          document.getElementById('otp-input-section')?.classList.remove('active');
+          emailInput.disabled = false;
+          document.getElementById('send-otp-btn').disabled = false;
+          return;
+        }
+        
+        secondsLeft--;
+      };
+
+      updateTimer(); // Initial call
+      expiryInterval = setInterval(updateTimer, 1000);
+    }
+
+    /**
+     * Override sendEmailOTP to start timer
+     */
+    const originalSendEmailOTP = sendEmailOTP;
+    window.sendEmailOTP = async function(email) {
+      clearInterval(expiryInterval); // Clear existing timer
+      const result = await originalSendEmailOTP(email);
+      if (result) {
+        startExpiryTimer();
+      }
+      return result;
+    };
+  </script>
+</body>
+</html>

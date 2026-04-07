@@ -3,35 +3,46 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const mysql = require('mysql2/promise');
+
+// Database configuration
+const dbConfig = {
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'lifelink'
+};
+
+// Database connection function
+async function getConnection() {
+  return await mysql.createConnection(dbConfig);
+}
 
 // ============ IN-MEMORY KYC STORAGE ============
 // Extended pendingUsers stored in otp.js, we reference it here
 let kycDatabase = {}; // { phone: { idCard, bloodGroup, kycStatus, kycSubmitted, submittedAt, reviewedAt, reviewedBy } }
 
 // ============ MULTER CONFIGURATION FOR FILE UPLOADS ============
-const uploadsDir = path.join(__dirname, '../uploads');
+const uploadsDir = path.join(__dirname, '../uploads/kyc');
 
-// Create uploads directory if it doesn't exist
+// Create uploads directory if it doesn't exist  
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: function (req, file, cb) {
     cb(null, uploadsDir);
   },
-  filename: (req, file, cb) => {
-    // Format: userid_idcard_timestamp.ext
-    const timestamp = Date.now();
-    const ext = path.extname(file.originalname);
-    cb(null, `${timestamp}_${file.fieldname}${ext}`);
+  filename: function (req, file, cb) {
+    // Use timestamp + random number for unique filenames
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
 
 const fileFilter = (req, file, cb) => {
-  // Only allow images and PDFs
   const allowedMimes = ['image/jpeg', 'image/png', 'application/pdf'];
-  
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -89,14 +100,53 @@ router.get('/profile', (req, res) => {
 });
 
 // ============ POST /api/kyc/submit - Submit KYC for verification ============
-router.post('/kyc/submit', upload.single('idCard'), (req, res) => {
+router.post('/kyc/submit', (req, res, next) => {
+  // Handle multer file upload with proper error handling
+  upload.single('idCard')(req, res, (err) => {
+    if (err) {
+      // Handle multer errors
+      if (err.code === 'FILE_TOO_LARGE' || err.limit === 'fileSize') {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'File is too large. Maximum size is 5MB.' 
+        });
+      }
+      if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Unexpected file field' 
+        });
+      }
+      return res.status(400).json({ 
+        success: false, 
+        message: 'File upload error: ' + err.message 
+      });
+    }
+    
+    // Continue to route handler after multer completes successfully
+    handleKYCSubmit(req, res);
+  });
+});
+
+function handleKYCSubmit(req, res) {
   try {
+    console.log('\n=== KYC SUBMIT HANDLER ===');
+    console.log('File received:', req.file ? {filename: req.file.filename, size: req.file.size, mimetype: req.file.mimetype} : 'NO FILE');
+    console.log('Body fields:', {phone: req.body.phone, bloodGroup: req.body.bloodGroup});
+    
+    if (!req.file) {
+      console.log('ERROR: No file uploaded');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No file uploaded' 
+      });
+    }
+
     const { phone, bloodGroup } = req.body;
 
-    // Validation
     if (!phone || !bloodGroup) {
-      // Clean up uploaded file if validation fails
-      if (req.file) {
+      console.log('ERROR: Missing fields - Phone:', phone, 'Blood Group:', bloodGroup);
+      if (fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
       }
       return res.status(400).json({ 
@@ -106,91 +156,156 @@ router.post('/kyc/submit', upload.single('idCard'), (req, res) => {
     }
 
     if (!validBloodGroups.includes(bloodGroup)) {
-      if (req.file) {
+      console.log('ERROR: Invalid blood group:', bloodGroup);
+      if (fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
       }
       return res.status(400).json({ 
         success: false, 
-        message: 'Invalid blood group' 
+        message: 'Invalid blood group: ' + bloodGroup 
       });
     }
 
-    if (!req.file) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'ID card file is required' 
-      });
-    }
-
-    // Check if user already has pending KYC
-    if (kycDatabase[phone] && kycDatabase[phone].kycStatus === 'pending') {
-      fs.unlinkSync(req.file.path);
-      return res.status(409).json({ 
-        success: false, 
-        message: 'You already have a pending KYC verification. Please wait for admin review.' 
-      });
-    }
-
-    // Check if user already approved
-    if (kycDatabase[phone] && kycDatabase[phone].kycStatus === 'approved') {
-      fs.unlinkSync(req.file.path);
-      return res.status(409).json({ 
-        success: false, 
-        message: 'You are already KYC verified!' 
-      });
-    }
-
-    // Store KYC data
+    // Store in memory for admin lookup
     kycDatabase[phone] = {
-      idCard: req.file.path,
-      idCardFilename: req.file.filename,
+      phone: phone,
       bloodGroup: bloodGroup,
-      kycStatus: 'pending', // pending | approved | rejected
-      kycSubmitted: true,
+      idCardPath: req.file.filename,
+      status: 'pending',
       submittedAt: new Date().toISOString(),
+      kycStatus: 'pending',
+      kycSubmitted: true,
       reviewedAt: null,
       rejectionReason: null
     };
 
-    console.log(`\n✅ KYC SUBMITTED`);
-    console.log(`📱 Phone: ${phone}`);
-    console.log(`🩸 Blood Group: ${bloodGroup}`);
-    console.log(`📄 ID Card: ${req.file.filename}`);
-    console.log(`⏰ Submitted: ${new Date().toISOString()}\n`);
+    console.log('✓ KYC stored in memory:', kycDatabase[phone]);
 
-    res.json({
-      success: true,
-      message: 'KYC verification submitted successfully! Admin will review within 24 hours.',
-      kycStatus: 'pending'
-    });
+    // Now save to database
+    saveKYCToDatabase(phone, bloodGroup, req.file.filename, res);
 
-  } catch (error) {
-    // Clean up uploaded file if error occurs
+  } catch (err) {
+    console.error('KYC Submit Error:', err);
     if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (unlinkErr) {
+        console.error('Error deleting file:', unlinkErr);
+      }
     }
-    console.error('KYC submission error:', error);
-    res.status(500).json({ success: false, message: 'Failed to submit KYC verification' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Upload failed: ' + err.message 
+    });
   }
-});
+}
+
+// Save KYC data to database
+async function saveKYCToDatabase(phone, bloodGroup, filename, res) {
+  let connection;
+  try {
+    connection = await getConnection();
+
+    // Check if user with this phone exists in users table
+    const [users] = await connection.execute(
+      'SELECT user_id FROM users WHERE phone = ?',
+      [phone]
+    );
+
+    if (users.length === 0) {
+      console.log('ERROR: User not found with phone:', phone);
+      if (res && !res.headersSent) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found. Please register first.'
+        });
+      }
+      return;
+    }
+
+    const userId = users[0].user_id;
+    console.log('Found user:', userId);
+
+    // Check if donor record exists
+    const [donors] = await connection.execute(
+      'SELECT donor_id FROM donors WHERE donor_id = ?',
+      [userId]
+    );
+
+    if (donors.length === 0) {
+      console.log('Creating new donor record for user:', userId);
+      // Insert new donor record
+      await connection.execute(
+        `INSERT INTO donors (donor_id, blood_group, kyc_document_path, kyc_pending, kyc_submitted_at) 
+         VALUES (?, ?, ?, ?, NOW())`,
+        [userId, bloodGroup, filename, true]
+      );
+    } else {
+      console.log('Updating existing donor record:', userId);
+      // Update existing donor record
+      await connection.execute(
+        `UPDATE donors 
+         SET blood_group = ?, kyc_document_path = ?, kyc_pending = ?, kyc_submitted_at = NOW(), kyc_verified = false
+         WHERE donor_id = ?`,
+        [bloodGroup, filename, true, userId]
+      );
+    }
+
+    console.log('✓ KYC saved to database for phone:', phone);
+    console.log('=== END KYC SUBMIT ===\n');
+
+    if (res && !res.headersSent) {
+      res.json({ 
+        success: true, 
+        message: 'KYC submitted successfully! Admin will review within 24 hours.',
+        kycStatus: 'pending'
+      });
+    }
+
+  } catch (err) {
+    console.error('Database Error:', err);
+    console.log('=== END KYC SUBMIT (ERROR) ===\n');
+    if (res && !res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: 'Database error: ' + err.message
+      });
+    }
+  } finally {
+    if (connection) {
+      try {
+        await connection.end();
+      } catch (endErr) {
+        console.error('Error closing connection:', endErr);
+      }
+    }
+  }
+}
 
 // ============ GET /api/kyc/requests - Get all pending KYC requests (ADMIN) ============
-router.get('/kyc/requests', (req, res) => {
+router.get('/kyc/requests', async (req, res) => {
+  let connection;
   try {
-    // In production, add admin authentication check here
-    // if (!req.session.isAdmin) return res.status(403).json({ message: 'Admin only' });
+    connection = await getConnection();
 
-    const pendingRequests = Object.entries(kycDatabase)
-      .filter(([phone, data]) => data.kycStatus === 'pending')
-      .map(([phone, data]) => ({
-        phone: phone.slice(-4), // Only last 4 digits for privacy
-        phoneFullForAdmin: phone, // Full phone for admin operations
-        bloodGroup: data.bloodGroup,
-        submittedAt: data.submittedAt,
-        idCardPath: data.idCard,
-        idCardFilename: data.idCardFilename,
-        status: data.kycStatus
-      }));
+    const [donors] = await connection.execute(`
+      SELECT u.phone, u.full_name, u.user_id,
+             d.blood_group, d.kyc_document_path, d.kyc_submitted_at, d.kyc_verified
+      FROM donors d
+      JOIN users u ON d.donor_id = u.user_id
+      WHERE d.kyc_pending = true AND d.kyc_verified = false
+      ORDER BY d.kyc_submitted_at DESC
+    `);
+
+    const pendingRequests = donors.map(donor => ({
+      phone: donor.phone.slice(-4), // Only last 4 digits for privacy
+      phoneFullForAdmin: donor.phone, // Full phone for admin operations
+      bloodGroup: donor.blood_group,
+      submittedAt: donor.kyc_submitted_at ? donor.kyc_submitted_at.toISOString() : new Date().toISOString(),
+      idCardPath: `/uploads/kyc/${donor.kyc_document_path}`,
+      idCardUrl: `/uploads/kyc/${donor.kyc_document_path}`,
+      status: 'pending'
+    }));
 
     res.json({
       success: true,
@@ -201,13 +316,21 @@ router.get('/kyc/requests', (req, res) => {
   } catch (error) {
     console.error('KYC requests fetch error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch KYC requests' });
+  } finally {
+    if (connection) {
+      try {
+        await connection.end();
+      } catch (err) {
+        console.error('Error closing connection:', err);
+      }
+    }
   }
 });
 
 // ============ POST /api/kyc/approve - Approve KYC (ADMIN) ============
-router.post('/kyc/approve', (req, res) => {
+router.post('/kyc/approve', async (req, res) => {
+  let connection;
   try {
-    // In production, add admin authentication check here
     const { phone } = req.body;
 
     if (!phone) {
@@ -217,29 +340,53 @@ router.post('/kyc/approve', (req, res) => {
       });
     }
 
-    if (!kycDatabase[phone]) {
+    connection = await getConnection();
+
+    // Find user by phone
+    const [users] = await connection.execute(
+      'SELECT user_id FROM users WHERE phone = ?',
+      [phone]
+    );
+
+    if (users.length === 0) {
+      await connection.end();
       return res.status(404).json({ 
         success: false, 
-        message: 'KYC record not found' 
+        message: 'User not found' 
       });
     }
 
-    if (kycDatabase[phone].kycStatus === 'approved') {
+    const userId = users[0].user_id;
+
+    // Check if already approved
+    const [donors] = await connection.execute(
+      'SELECT kyc_verified FROM donors WHERE donor_id = ?',
+      [userId]
+    );
+
+    if (donors.length > 0 && donors[0].kyc_verified) {
+      await connection.end();
       return res.status(409).json({ 
         success: false, 
         message: 'Already approved' 
       });
     }
 
-    // Approve KYC
-    kycDatabase[phone].kycStatus = 'approved';
-    kycDatabase[phone].reviewedAt = new Date().toISOString();
-    kycDatabase[phone].reviewedBy = req.session.adminId || 'system'; // Would come from session in production
+    // Approve KYC in database
+    await connection.execute(
+      `UPDATE donors 
+       SET kyc_verified = true, kyc_pending = false, kyc_verified_at = NOW()
+       WHERE donor_id = ?`,
+      [userId]
+    );
 
-    console.log(`\n✅ KYC APPROVED`);
-    console.log(`📱 Phone: ${phone}`);
-    console.log(`🩸 Blood Group: ${kycDatabase[phone].bloodGroup}`);
-    console.log(`⏰ Approved: ${new Date().toISOString()}\n`);
+    // Update in-memory database
+    if (kycDatabase[phone]) {
+      kycDatabase[phone].kycStatus = 'approved';
+      kycDatabase[phone].reviewedAt = new Date().toISOString();
+    }
+
+    await connection.end();
 
     res.json({
       success: true,
@@ -248,15 +395,23 @@ router.post('/kyc/approve', (req, res) => {
     });
 
   } catch (error) {
-    console.error('KYC approval error:', error);
-    res.status(500).json({ success: false, message: 'Failed to approve KYC' });
+    console.error('KYC Approve Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to approve KYC: ' + error.message });
+  } finally {
+    if (connection) {
+      try {
+        await connection.end();
+      } catch (err) {
+        console.error('Connection error:', err);
+      }
+    }
   }
 });
 
 // ============ POST /api/kyc/reject - Reject KYC (ADMIN) ============
-router.post('/kyc/reject', (req, res) => {
+router.post('/kyc/reject', async (req, res) => {
+  let connection;
   try {
-    // In production, add admin authentication check here
     const { phone, reason } = req.body;
 
     if (!phone) {
@@ -266,43 +421,80 @@ router.post('/kyc/reject', (req, res) => {
       });
     }
 
-    if (!kycDatabase[phone]) {
+    connection = await getConnection();
+
+    // Find user by phone
+    const [users] = await connection.execute(
+      'SELECT user_id FROM users WHERE phone = ?',
+      [phone]
+    );
+
+    if (users.length === 0) {
+      await connection.end();
       return res.status(404).json({ 
         success: false, 
-        message: 'KYC record not found' 
+        message: 'User not found' 
       });
     }
 
-    // Reject KYC and allow resubmission
-    kycDatabase[phone].kycStatus = 'rejected';
-    kycDatabase[phone].kycSubmitted = false; // Allow resubmission
-    kycDatabase[phone].reviewedAt = new Date().toISOString();
-    kycDatabase[phone].rejectionReason = reason || 'Documents did not meet verification requirements';
+    const userId = users[0].user_id;
+    const rejectionReason = reason || 'Documents did not meet verification requirements';
 
-    console.log(`\n❌ KYC REJECTED`);
-    console.log(`📱 Phone: ${phone}`);
-    console.log(`📋 Reason: ${kycDatabase[phone].rejectionReason}`);
-    console.log(`⏰ Rejected: ${new Date().toISOString()}\n`);
+    // Reject KYC and allow resubmission
+    await connection.execute(
+      `UPDATE donors 
+       SET kyc_verified = false, kyc_pending = false, kyc_rejection_reason = ?, kyc_rejected_at = NOW()
+       WHERE donor_id = ?`,
+      [rejectionReason, userId]
+    );
+
+    // Update in-memory database
+    if (kycDatabase[phone]) {
+      kycDatabase[phone].kycStatus = 'rejected';
+      kycDatabase[phone].kycSubmitted = false;
+      kycDatabase[phone].reviewedAt = new Date().toISOString();
+      kycDatabase[phone].rejectionReason = rejectionReason;
+    }
+
+    await connection.end();
 
     res.json({
       success: true,
       message: `KYC rejected for ${phone}. User can resubmit.`,
       kycStatus: 'rejected',
-      rejectionReason: kycDatabase[phone].rejectionReason
+      rejectionReason: rejectionReason
     });
 
   } catch (error) {
-    console.error('KYC rejection error:', error);
-    res.status(500).json({ success: false, message: 'Failed to reject KYC' });
+    console.error('KYC Reject Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to reject KYC: ' + error.message });
+  } finally {
+    if (connection) {
+      try {
+        await connection.end();
+      } catch (err) {
+        console.error('Connection error:', err);
+      }
+    }
   }
 });
 
 // ============ GET /api/kyc/status/:phone - Check KYC status ============
-router.get('/kyc/status/:phone', (req, res) => {
+router.get('/kyc/status/:phone', async (req, res) => {
+  let connection;
   try {
     const { phone } = req.params;
 
-    if (!kycDatabase[phone]) {
+    connection = await getConnection();
+
+    // Find user by phone
+    const [users] = await connection.execute(
+      'SELECT user_id FROM users WHERE phone = ?',
+      [phone]
+    );
+
+    if (users.length === 0) {
+      await connection.end();
       return res.json({
         success: true,
         status: 'not_started',
@@ -311,22 +503,54 @@ router.get('/kyc/status/:phone', (req, res) => {
       });
     }
 
-    const data = kycDatabase[phone];
+    const userId = users[0].user_id;
+
+    // Get KYC status from donors table
+    const [donors] = await connection.execute(
+      `SELECT kyc_verified, kyc_pending, blood_group, kyc_submitted_at, 
+              kyc_verified_at, kyc_rejection_reason
+       FROM donors WHERE donor_id = ?`,
+      [userId]
+    );
+
+    await connection.end();
+
+    if (donors.length === 0 || !donors[0].kyc_pending) {
+      return res.json({
+        success: true,
+        status: 'not_started',
+        verified: false,
+        pending: false
+      });
+    }
+
+    const donor = donors[0];
+    let status = 'pending';
+    if (donor.kyc_verified) status = 'approved';
+    else if (donor.kyc_rejection_reason) status = 'rejected';
 
     res.json({
       success: true,
-      status: data.kycStatus,
-      verified: data.kycStatus === 'approved',
-      pending: data.kycStatus === 'pending',
-      bloodGroup: data.bloodGroup,
-      submittedAt: data.submittedAt,
-      reviewedAt: data.reviewedAt,
-      rejectionReason: data.rejectionReason || null
+      status: status,
+      verified: donor.kyc_verified || false,
+      pending: donor.kyc_pending || false,
+      bloodGroup: donor.blood_group,
+      submittedAt: donor.kyc_submitted_at ? donor.kyc_submitted_at.toISOString() : null,
+      verifiedAt: donor.kyc_verified_at ? donor.kyc_verified_at.toISOString() : null,
+      rejectionReason: donor.kyc_rejection_reason || null
     });
 
   } catch (error) {
     console.error('Status check error:', error);
     res.status(500).json({ success: false, message: 'Failed to check status' });
+  } finally {
+    if (connection) {
+      try {
+        await connection.end();
+      } catch (err) {
+        console.error('Connection error:', err);
+      }
+    }
   }
 });
 

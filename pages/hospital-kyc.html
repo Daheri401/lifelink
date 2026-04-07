@@ -36,6 +36,9 @@
       </div>
 
       <div class="card-body">
+        <!-- Alert container for error/success messages -->
+        <div id="hospital-kyc-alert" style="display: none; padding: 12px; margin-bottom: 16px; border-radius: 4px; border: 1px solid; font-weight: 500;"></div>
+
         <div class="alert alert-info mb-4">
           <span class="alert-icon">ℹ️</span>
           <div class="alert-content">
@@ -43,7 +46,7 @@
           </div>
         </div>
 
-        <form id="hospital-kyc-form">
+        <form id="hospital-kyc-form" onsubmit="handleHospitalKyc(event)">
           <!-- License Information -->
           <fieldset>
             <legend style="font-size: 16px; font-weight: 600; margin-bottom: 16px; display: block;">License & Registration Details</legend>

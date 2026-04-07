@@ -21,6 +21,7 @@
           <a href="donation-history.html" class="nav-link">History</a>
           <a href="../index.html" class="nav-link">Help</a>
           <button id="theme-toggle" title="Toggle dark/light theme">🌙</button>
+          <span id="wallet-balance">Balance: 0 points</span>
           <div class="nav-button">
             <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
           </div>
@@ -135,6 +136,7 @@
             <h4>Settings</h4>
             <p>Update your profile</p>
           </div>
+          <div id="donor-qrcode"></div>
         </div>
 
         <!-- URGENT REQUESTS SECTION -->
@@ -349,7 +351,7 @@
       </div>
     </div>
   </footer>
-
+<script src="../js/qrcode.min.js"></script>
   <script src="/js/script.js"></script>
   <script>
     // Load donor profile information
@@ -730,6 +732,7 @@
     document.addEventListener('DOMContentLoaded', function() {
       loadProfile();
       loadStats();
+      checkWalletLock(); // Check wallet lock status for QR system
     });
   </script>
 </body>

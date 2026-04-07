@@ -9,6 +9,10 @@ const multer = require('multer');
 const otpRoutes = require('./routes/otp');
 const kycRoutes = require('./routes/kyc');
 const qrVerificationRoutes = require('./routes/qr-verification');
+const qrTransactionRoutes = require('./routes/qr-transactions');
+
+// Email OTP System
+const { generateOTP, sendOTP, storeOTP, verifyOTP } = require('./emailOTP');
 
 // Database configuration
 const dbConfig = {
@@ -25,8 +29,7 @@ const PORT = 8500;
 app.use(express.static(path.join(__dirname, '../lifelink-ui')));
 app.use(express.static(path.join(__dirname, '../css')));
 app.use(express.static(path.join(__dirname, '../pages')));
-app.use(express.static(path.join(__dirname, '../uploads'))); // Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // KYC uploads
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // Serve uploaded files with /uploads prefix
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -83,6 +86,10 @@ app.get("/register-otp", (req, res) => {
 
 app.get("/verify-otp.html", (req, res) => {
   res.sendFile(path.join(__dirname,"../pages", "verify-otp.html"));
+});
+
+app.get("/email-otp", (req, res) => {
+  res.sendFile(path.join(__dirname,"../pages", "email-otp.html"));
 });
 
 app.get("/css", (req, res) => {
@@ -577,40 +584,143 @@ app.get('/api/profile', requireAuth, async (req, res) => {
 });
 
 // Hospital KYC Verification endpoints
-app.post('/api/hospital/kyc/submit', requireAuth, requireRole('hospital'), async (req, res) => {
-  try {
-    const connection = await getConnection();
-    const hospitalId = req.session.userId;
+// First, set up multer for hospital KYC files
+const hospitalKycUploadsDir = path.join(__dirname, '../uploads/hospital-kyc');
 
-    const {
-      licenseNumber,
-      registrationNumber,
-      registrationDate,
-      issuingAuthority,
-      hospitalAddress,
-      contactPerson
-    } = req.body;
+// Create hospital KYC uploads directory if it doesn't exist
+if (!require('fs').existsSync(hospitalKycUploadsDir)) {
+  require('fs').mkdirSync(hospitalKycUploadsDir, { recursive: true });
+}
 
-    // Update hospital with KYC information
-    await connection.execute(
-      `UPDATE hospitals SET
-        license_number = ?,
-        registration_number = ?,
-        registration_date = ?,
-        issuing_authority = ?,
-        hospital_address = ?,
-        contact_person = ?,
-        verification_status = 'pending',
-        kyc_submitted_at = CURRENT_TIMESTAMP
-       WHERE hospital_id = ?`,
-      [licenseNumber, registrationNumber, registrationDate, issuingAuthority, hospitalAddress, contactPerson, hospitalId]
-    );
-
-    await connection.end();
-    res.json({ success: true, message: 'KYC documents submitted for review' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+const hospitalKycStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, hospitalKycUploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    const fileExt = path.extname(file.originalname);
+    cb(null, `${timestamp}-${randomSuffix}${fileExt}`);
   }
+});
+
+const hospitalKycUpload = multer({
+  storage: hospitalKycStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only PDF, JPG, and PNG are allowed.'));
+    }
+  }
+});
+
+app.post('/api/hospital/kyc/submit', requireAuth, requireRole('hospital'), (req, res) => {
+  console.log('🏥 Hospital KYC submit route accessed');
+  console.log('User ID:', req.session.userId);
+  console.log('User Role:', req.session.role);
+  
+  // Handle multipart form data with files
+  hospitalKycUpload.fields([
+    { name: 'licenseDocument', maxCount: 1 },
+    { name: 'registrationCertificate', maxCount: 1 },
+    { name: 'bloodBankCertification', maxCount: 1 }
+  ])(req, res, async (err) => {
+    if (err) {
+      console.error('❌ Multer error:', err.message);
+      return res.status(400).json({ success: false, message: 'File upload error: ' + err.message });
+    }
+
+    try {
+      const hospitalId = req.session.userId;
+
+      const {
+        licenseNumber,
+        registrationNumber,
+        registrationDate,
+        issuingAuthority,
+        hospitalAddress,
+        contactPerson
+      } = req.body;
+
+      console.log('📋 Form data received:', {
+        licenseNumber,
+        registrationNumber,
+        registrationDate,
+        issuingAuthority,
+        contactPerson
+      });
+      console.log('📁 Files received:', {
+        licenseDocument: req.files?.licenseDocument?.[0]?.filename,
+        registrationCertificate: req.files?.registrationCertificate?.[0]?.filename,
+        bloodBankCertification: req.files?.bloodBankCertification?.[0]?.filename
+      });
+
+      // Validate required fields
+      if (!licenseNumber || !registrationNumber || !registrationDate || !issuingAuthority || !hospitalAddress || !contactPerson) {
+        console.warn('⚠️ Missing required fields');
+        return res.status(400).json({ success: false, message: 'All text fields are required' });
+      }
+
+      // Validate required files
+      if (!req.files?.licenseDocument?.[0]) {
+        console.warn('⚠️ License document missing');
+        return res.status(400).json({ success: false, message: 'Medical license document is required' });
+      }
+
+      if (!req.files?.registrationCertificate?.[0]) {
+        console.warn('⚠️ Registration certificate missing');
+        return res.status(400).json({ success: false, message: 'Registration certificate is required' });
+      }
+
+      const licenseDocPath = `/uploads/hospital-kyc/${req.files.licenseDocument[0].filename}`;
+      const registrationCertPath = `/uploads/hospital-kyc/${req.files.registrationCertificate[0].filename}`;
+      const bloodBankCertPath = req.files?.bloodBankCertification?.[0] 
+        ? `/uploads/hospital-kyc/${req.files.bloodBankCertification[0].filename}`
+        : null;
+
+      const connection = await getConnection();
+
+      // Update hospital with KYC information
+      await connection.execute(
+        `UPDATE hospitals SET
+          license_number = ?,
+          registration_number = ?,
+          registration_date = ?,
+          issuing_authority = ?,
+          hospital_address = ?,
+          contact_person = ?,
+          license_document_path = ?,
+          registration_certificate_path = ?,
+          blood_bank_certification_path = ?,
+          verification_status = 'pending',
+          kyc_submitted_at = CURRENT_TIMESTAMP
+         WHERE hospital_id = ?`,
+        [
+          licenseNumber,
+          registrationNumber,
+          registrationDate,
+          issuingAuthority,
+          hospitalAddress,
+          contactPerson,
+          licenseDocPath,
+          registrationCertPath,
+          bloodBankCertPath,
+          hospitalId
+        ]
+      );
+
+      await connection.end();
+      
+      console.log('✅ Hospital KYC submitted successfully');
+      res.json({ success: true, message: 'KYC documents submitted for review. Your verification will be completed within 24-48 hours.' });
+    } catch (error) {
+      console.error('💥 Error submitting hospital KYC:', error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
 });
 
 // Admin: Get hospitals for KYC verification
@@ -696,23 +806,7 @@ app.get('/api/hospital/stats', requireAuth, requireRole('hospital'), async (req,
 });
 
 // KYC Verification endpoints
-app.post('/api/kyc/submit', requireAuth, requireRole('donor'), async (req, res) => {
-  try {
-    const connection = await getConnection();
-    const userId = req.session.userId;
-
-    // Update donor with KYC pending status
-    await connection.execute(
-      'UPDATE donors SET kyc_pending = TRUE WHERE donor_id = ?',
-      [userId]
-    );
-
-    await connection.end();
-    res.json({ success: true, message: 'KYC documents submitted for review' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
+// KYC submit route is handled by kycRoutes (no duplicate here)
 
 // Wallet endpoints
 app.get('/api/wallet', requireAuth, requireRole('donor'), async (req, res) => {
@@ -796,6 +890,35 @@ app.post('/api/donations/checkin', requireAuth, requireRole('donor'), async (req
   }
 });
 
+app.post('/api/verify-donor-qr', async (req, res) => {
+  try {
+    const { donor_id, token } = req.body;
+
+    const user = await User.findOne({
+      _id: donor_id,
+      qr_token: token
+    });
+
+    if (!user) {
+      return res.json({ success: false, message: 'Invalid QR Code' });
+    }
+
+    // Prevent reuse (optional but recommended)
+    user.qr_token = null;
+    await user.save();
+
+    res.json({
+      success: true,
+      name: user.name,
+      bloodGroup: user.bloodGroup
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false });
+  }
+});
+
 // Update profile endpoint to include KYC status
 app.get('/api/profile', requireAuth, async (req, res) => {
   try {
@@ -845,11 +968,195 @@ app.post('/api/verify', async (req, res) => {
   }
 });
 
+
 // OTP Routes
 app.use('/api', otpRoutes);
 
 // KYC Routes
 app.use('/api', kycRoutes);
+
+// QR Transaction Routes
+app.use('/', qrTransactionRoutes);
+
+// DEBUG: Check KYC Database status (development only)
+app.get('/api/debug/kyc-status', (req, res) => {
+  try {
+    const kycDatabase = require('./routes/kyc').kycDatabase;
+    const keys = Object.keys(kycDatabase);
+    const data = {};
+    
+    keys.forEach(phone => {
+      data[phone] = {
+        status: kycDatabase[phone].kycStatus,
+        bloodGroup: kycDatabase[phone].bloodGroup,
+        submittedAt: kycDatabase[phone].submittedAt,
+        filename: kycDatabase[phone].idCardFilename
+      };
+    });
+    
+    console.log('\n📊 DEBUG: KYC Database Status');
+    console.log(`Total entries: ${keys.length}`);
+    console.log('Entries:', data);
+    
+    res.json({
+      success: true,
+      totalEntries: keys.length,
+      entries: data,
+      timestamps: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Debug error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ============================================
+// EMAIL OTP ROUTES (NEW SYSTEM)
+// ============================================
+
+/**
+ * POST /api/send-otp
+ * Send OTP code to email address
+ * Body: { email: "user@example.com" }
+ */
+app.post('/api/send-otp', express.json(), async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validate email
+    if (!email || !email.includes('@')) {
+      console.warn('⚠️ Invalid email provided');
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address'
+      });
+    }
+
+    // Generate OTP
+    const otp = generateOTP();
+    console.log(`📧 OTP generation request for: ${email}`);
+
+    // Send email
+    const emailSent = await sendOTP(email, otp);
+
+    if (!emailSent) {
+      console.error('❌ Failed to send OTP email');
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send OTP. Please check your email address and try again.'
+      });
+    }
+
+    // Store OTP temporarily
+    storeOTP(email, otp);
+
+    console.log(`✅ OTP sent and stored for: ${email}`);
+    res.json({ success: true, message: 'OTP sent to your email address' });
+
+  } catch (error) {
+    console.error('💥 Error in /api/send-otp:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while sending OTP'
+    });
+  }
+});
+
+/**
+ * POST /api/verify-otp
+ * Verify OTP code sent to email
+ * Body: { email: "user@example.com", otp: "123456" }
+ */
+app.post('/api/verify-otp', express.json(), async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    // Validate inputs
+    if (!email || !otp) {
+      console.warn('⚠️ Missing email or OTP in verification request');
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
+      });
+    }
+
+    console.log(`🔍 Verifying OTP for: ${email}`);
+
+    // Verify OTP
+    const result = verifyOTP(email, otp);
+
+    if (!result.success) {
+      console.warn(`⚠️ OTP verification failed for ${email}: ${result.message}`);
+      return res.status(400).json({
+        success: false,
+        message: result.message
+      });
+    }
+
+    // OTP verified successfully
+    console.log(`✅ OTP verified for: ${email}`);
+    res.json({
+      success: true,
+      message: 'OTP verified successfully',
+      email: email
+    });
+
+  } catch (error) {
+    console.error('💥 Error in /api/verify-otp:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while verifying OTP'
+    });
+  }
+});
+
+/**
+ * POST /api/resend-otp
+ * Resend OTP code if the previous one expired
+ * Body: { email: "user@example.com" }
+ */
+app.post('/api/resend-otp', express.json(), async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validate email
+    if (!email || !email.includes('@')) {
+      console.warn('⚠️ Invalid email for resend');
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address'
+      });
+    }
+
+    console.log(`🔄 Resending OTP for: ${email}`);
+
+    // Generate new OTP
+    const otp = generateOTP();
+
+    // Send email
+    const emailSent = await sendOTP(email, otp);
+
+    if (!emailSent) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to resend OTP. Please try again.'
+      });
+    }
+
+    // Store new OTP
+    storeOTP(email, otp);
+
+    console.log(`✅ OTP resent to: ${email}`);
+    res.json({ success: true, message: 'OTP resent to your email address' });
+
+  } catch (error) {
+    console.error('💥 Error in /api/resend-otp:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while resending OTP'
+    });
+  }
+});
 
 // QR Verification Routes
 app.use('/api/qr', qrVerificationRoutes);

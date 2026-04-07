@@ -62,7 +62,7 @@
           <div id="kyc-alert" class="alert" style="display: none;"></div>
 
           <!-- KYC FORM -->
-          <form id="kyc-form" class="kyc-form">
+          <form id="kyc-form" class="kyc-form" enctype="multipart/form-data">
             <!-- ID CARD UPLOAD SECTION -->
             <div class="form-group">
               <label for="id-card" class="form-label">
@@ -339,14 +339,26 @@
       const idCardFile = document.getElementById('id-card').files[0];
       const submitBtn = document.getElementById('kyc-submit-btn');
 
-      // Validation
+      console.log('=== KYC FORM SUBMISSION DEBUG ===');
+      console.log('Phone:', phone);
+      console.log('Blood Group:', bloodGroup);
+      console.log('File:', idCardFile ? {name: idCardFile.name, size: idCardFile.size, type: idCardFile.type} : null);
+
+      // Validation: Blood Group
       if (!bloodGroup) {
         showKYCAlert('Please select your blood group', 'error');
         return;
       }
 
+      // Validation: File selected
       if (!idCardFile) {
         showKYCAlert('Please upload your ID card', 'error');
+        return;
+      }
+
+      // Validation: Phone provided
+      if (!phone) {
+        showKYCAlert('Session error. Please log in again.', 'error');
         return;
       }
 
@@ -360,20 +372,44 @@
       formData.append('phone', phone);
       formData.append('bloodGroup', bloodGroup);
       formData.append('idCard', idCardFile);
-
+      
+      console.log('FormData created with fields: phone, bloodGroup, idCard');
+      
       // Submit to backend
       fetch('/api/kyc/submit', {
         method: 'POST',
         body: formData
-        // Don't set Content-Type header - let browser set it with boundary
+        // DO NOT set Content-Type header - let browser set it with boundary
       })
-      .then(response => response.json())
+      .then(response => {
+        console.log('Response Status:', response.status, response.statusText);
+        console.log('Response Headers:', response.headers.get('content-type'));
+        
+        // Try to parse as JSON
+        return response.json().then(data => {
+          console.log('Response Data:', data);
+          
+          // Check if response is ok
+          if (!response.ok) {
+            throw new Error(data.message || `Server error: ${response.status}`);
+          }
+          return data;
+        }).catch(parseErr => {
+          console.error('Response parsing error:', parseErr);
+          if (!response.ok) {
+            throw new Error(`Server error: ${response.status} ${response.statusText}`);
+          }
+          throw parseErr;
+        });
+      })
       .then(data => {
+        console.log('Processing successful response:', data);
         if (data.success) {
           showKYCAlert('✓ KYC submitted successfully! Admin review in progress.', 'success');
           
           // Store KYC status
           localStorage.setItem('kycStatus', 'pending');
+          localStorage.setItem('kycSubmittedAt', new Date().toISOString());
           
           // Redirect to dashboard after 2 seconds
           setTimeout(() => {
@@ -384,10 +420,12 @@
         }
       })
       .catch(error => {
-        console.error('KYC submission error:', error);
-        showKYCAlert('Failed to submit KYC. Please try again.', 'error');
+        console.error('KYC Submission Error:', error);
+        console.error('Error message:', error.message);
+        showKYCAlert(error.message || 'Failed to submit KYC. Please try again.', 'error');
       })
       .finally(() => {
+        console.log('=== END SUBMISSION ===');
         submitBtn.disabled = false;
         submitBtn.querySelector('.btn-text').style.display = 'inline';
         submitBtn.querySelector('.btn-loader').style.display = 'none';
