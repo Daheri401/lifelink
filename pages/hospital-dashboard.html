@@ -517,44 +517,137 @@
     }
 
     function submitPostRequest() {
-      const form = document.getElementById('post-request-form');
+      console.log('🏥 Post Request button clicked - START');
       
-      const requestData = {
-        blood_type: document.getElementById('blood-type').value,
-        units_needed: parseInt(document.getElementById('units-needed').value, 10),
-        urgency: document.getElementById('urgency').value,
-        location: document.getElementById('hospital-location').value,
-        case_description: document.getElementById('case-description').value
-      };
-
-      if (!requestData.blood_type || !requestData.units_needed || !requestData.urgency || !requestData.location || !requestData.case_description) {
-        showErrorNotification('Please complete all request fields');
-        return;
-      }
-
-      const requestId = form.dataset.requestId;
-      const url = requestId ? `/api/requests/${requestId}` : '/api/requests';
-      const method = requestId ? 'PUT' : 'POST';
-
-      fetchApiJson(url, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestData)
-      })
-        .then(() => {
-          const message = requestId ? 'Request updated successfully' : 'Request posted successfully';
-          showSuccessNotification(message);
-          closeModal('postRequestModal');
-          form.reset();
-          delete form.dataset.requestId;
-          loadActiveRequests();
-        })
-        .catch(error => {
-          console.error('Error submitting request:', error);
-          showErrorNotification(error.message || 'Failed to submit request. Please try again.');
+      try {
+        const form = document.getElementById('post-request-form');
+        
+        // Validate form element exists
+        if (!form) {
+          console.error('❌ POST REQUEST FORM NOT FOUND');
+          alert('Form element not found - please refresh the page');
+          return;
+        }
+        console.log('✅ Form element found');
+        
+        const bloodType = document.getElementById('blood-type')?.value || '';
+        const unitsNeeded = document.getElementById('units-needed')?.value || '';
+        const urgency = document.getElementById('urgency')?.value || '';
+        const location = document.getElementById('hospital-location')?.value || '';
+        const caseDescription = document.getElementById('case-description')?.value || '';
+        
+        console.log('📝 Form values extracted:', {
+          bloodType: bloodType?.substring(0, 5),
+          unitsNeeded,
+          urgency: urgency?.substring(0, 5),
+          location: location?.substring(0, 10),
+          caseDescLength: caseDescription?.length
         });
+
+        // Validate all fields
+        if (!bloodType.trim()) {
+          console.warn('⚠️ Blood type is empty');
+          showErrorNotification('Please select a blood type');
+          return;
+        }
+        if (!unitsNeeded.trim() || parseInt(unitsNeeded) <= 0) {
+          console.warn('⚠️ Units needed is invalid');
+          showErrorNotification('Please enter a valid number of units');
+          return;
+        }
+        if (!urgency.trim()) {
+          console.warn('⚠️ Urgency is empty');
+          showErrorNotification('Please select an urgency level');
+          return;
+        }
+        if (!location.trim()) {
+          console.warn('⚠️ Location is empty');
+          showErrorNotification('Please enter the location');
+          return;
+        }
+        if (!caseDescription.trim()) {
+          console.warn('⚠️ Case description is empty');
+          showErrorNotification('Please enter a case description');
+          return;
+        }
+
+        console.log('✅ All validation checks passed');
+
+        const requestData = {
+          blood_type: bloodType,
+          units_needed: parseInt(unitsNeeded, 10),
+          urgency: urgency,
+          location: location,
+          case_description: caseDescription
+        };
+
+        const requestId = form.dataset.requestId;
+        const url = requestId ? `/api/requests/${requestId}` : '/api/requests';
+        const method = requestId ? 'PUT' : 'POST';
+        
+        console.log(`📤 Sending ${method} request to ${url}`);
+        console.log('📦 Request payload:', JSON.stringify(requestData, null, 2));
+
+        // Make the fetch call
+        fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(requestData)
+        })
+          .then(response => {
+            console.log(`📥 Response received - Status: ${response.status} ${response.statusText}`);
+            
+            if (!response.ok) {
+              console.error(`❌ Response not OK: ${response.status}`);
+              return response.json().then(data => {
+                throw new Error(data.message || `Server error: ${response.status}`);
+              });
+            }
+            
+            return response.json();
+          })
+          .then(data => {
+            console.log('📥 Response data:', data);
+            
+            if (!data.success) {
+              throw new Error(data.message || 'Server returned failure');
+            }
+            
+            const message = requestId ? 'Request updated successfully' : 'Request posted successfully';
+            console.log('✅ SUCCESS:', message);
+            showSuccessNotification(message);
+            
+            // Close modal and reset form
+            closeModal('postRequestModal');
+            form.reset();
+            delete form.dataset.requestId;
+            
+            console.log('📊 Modal closed, refreshing active requests list...');
+            
+            // Refresh the requests list
+            setTimeout(() => {
+              loadActiveRequests();
+            }, 500);
+          })
+          .catch(error => {
+            console.error('❌ FETCH ERROR CAUGHT:', error);
+            console.error('Error message:', error.message);
+            console.error('Full error:', error);
+            
+            const userMessage = error.message || 'Failed to submit request. Please try again.';
+            console.log(`🔔 Showing error to user: ${userMessage}`);
+            showErrorNotification(userMessage);
+          });
+        
+      } catch (error) {
+        console.error('❌ CRITICAL ERROR in submitPostRequest:', error);
+        console.error('Error message:', error.message);
+        console.error('Full error:', error);
+        alert(`Critical error: ${error.message}`);
+      }
     }
 
     // Initialize hospital dashboard
@@ -566,10 +659,27 @@
 
       // Add event listener for post request button
       document.getElementById('post-request-btn').addEventListener('click', () => {
+        console.log('🏥 Post New Request button clicked');
         document.getElementById('post-request-form').reset();
         delete document.getElementById('post-request-form').dataset.requestId;
         openModal('postRequestModal');
       });
+
+      // Add click listener to the submit button in the modal as backup
+      const submitModalBtn = Array.from(document.querySelectorAll('button')).find(btn => 
+        btn.textContent.includes('Post Request') && btn.className.includes('btn-primary')
+      );
+      
+      if (submitModalBtn) {
+        console.log('✅ Found Post Request submit button in modal, attaching click listener');
+        submitModalBtn.addEventListener('click', (e) => {
+          console.log('🖱️ Post Request button clicked via event listener');
+          e.preventDefault();
+          submitPostRequest();
+        });
+      } else {
+        console.warn('⚠️ Could not find Post Request button in modal');
+      }
 
       document.querySelectorAll('.filter-btn').forEach((btn) => {
         btn.addEventListener('click', () => {

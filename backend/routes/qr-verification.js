@@ -293,6 +293,22 @@ router.post('/verify-donation', requireAuth, async (req, res) => {
       donationId = result.insertId;
     }
 
+    // 🔓 UNLOCK WALLET: Update donor wallet_balance to unlock wallet access
+    // Set initial wallet balance to 100 points to unlock wallet features
+    const [currentBalance] = await connection.execute(
+      'SELECT wallet_balance FROM donors WHERE donor_id = ?',
+      [donorId]
+    );
+
+    if (currentBalance.length > 0) {
+      const newBalance = Math.max(100, currentBalance[0].wallet_balance || 0);
+      await connection.execute(
+        'UPDATE donors SET wallet_balance = ? WHERE donor_id = ?',
+        [newBalance, donorId]
+      );
+      console.log(`✅ Wallet unlocked for donor ${donorId}: balance set to ${newBalance}`);
+    }
+
     // Mark QR code as used
     await connection.execute(
       'UPDATE qr_codes SET status = ?, used_by_donor = ?, used_at = NOW() WHERE transaction_id = ?',

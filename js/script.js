@@ -1,5 +1,62 @@
 /* LifeLink - Interactive JavaScript */
 
+console.log('✅ script.js loaded successfully');
+
+// ========================================
+// 0.5 GLOBAL FETCH WRAPPER FOR DEBUGGING
+// ========================================
+
+const originalFetch = window.fetch;
+window.fetch = function(...args) {
+  const [url, options] = args;
+  console.log(`📤 FETCH: ${options?.method || 'GET'} ${url}`, {
+    method: options?.method,
+    headers: options?.headers,
+    body: options?.body ? (typeof options.body === 'string' ? 'JSON data' : options.body) : undefined
+  });
+  
+  return originalFetch.apply(this, args)
+    .then(response => {
+      console.log(`📥 RESPONSE: ${response.status} ${response.statusText} from ${url}`);
+      return response;
+    })
+    .catch(error => {
+      console.error(`❌ FETCH ERROR: ${error.message} for ${url}`);
+      throw error;
+    });
+};
+
+// Helper function to safely parse JSON responses
+async function safeJsonResponse(response) {
+  try {
+    const contentType = response.headers.get('content-type') || '';
+    
+    if (!contentType.includes('application/json')) {
+      console.warn(`⚠️ Response is not JSON (${contentType}), attempting to parse anyway...`);
+    }
+    
+    const text = await response.text();
+    
+    if (!text) {
+      console.warn('⚠️ Empty response body');
+      return {};
+    }
+    
+    try {
+      return JSON.parse(text);
+    } catch (parseError) {
+      console.error('❌ JSON Parse Error:', {
+        text: text?.substring(0, 100),
+        error: parseError.message
+      });
+      throw new Error(`Invalid JSON response: ${text?.substring(0, 50)}`);
+    }
+  } catch (error) {
+    console.error('❌ Error parsing response:', error);
+    throw error;
+  }
+}
+
 // ========================================
 // 0. THEME TOGGLE (Dark/Light Mode)
 // ========================================
@@ -102,6 +159,51 @@ document.querySelectorAll('.alert-close').forEach(button => {
     this.closest('.alert').style.display = 'none';
   });
 });
+
+// ========================================
+// 1.5 AUTHENTICATION FUNCTIONS
+// ========================================
+
+/**
+ * Logout function - clears session and redirects to home
+ */
+async function logout() {
+  console.log('🚪 Logout initiated');
+  
+  try {
+    const response = await fetch('/api/logout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    });
+    
+    const data = await response.json();
+    console.log('✅ Logout response:', data);
+    
+    if (data.success) {
+      console.log('✅ Session destroyed successfully');
+      showAlert('Logged out successfully', 'success');
+      
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000);
+    } else {
+      console.error('❌ Logout failed:', data.message);
+      // Still redirect even if logout failed
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 500);
+    }
+  } catch (error) {
+    console.error('❌ Logout error:', error);
+    // Force redirect if there's an error
+    setTimeout(() => {
+      window.location.href = '/login';
+    }, 500);
+  }
+}
 
 // ========================================
 // 2. OTP INPUT HANDLING
@@ -301,6 +403,7 @@ function filterRequestsByDistance(lat, lng) {
 // ========================================
 
 function showAlert(message, type = 'info') {
+  console.log(`🔔 ALERT (${type}): ${message}`);
   const alertContainer = document.createElement('div');
   alertContainer.className = `alert alert-${type}`;
   alertContainer.innerHTML = `
@@ -319,10 +422,12 @@ function showAlert(message, type = 'info') {
 }
 
 function showSuccessNotification(message) {
+  console.log(`✅ SUCCESS: ${message}`);
   showAlert(message, 'success');
 }
 
 function showErrorNotification(message) {
+  console.log(`❌ ERROR: ${message}`);
   showAlert(message, 'error');
 }
 
@@ -330,39 +435,184 @@ function showErrorNotification(message) {
 // 8. REQUEST ACTIONS
 // ========================================
 
-function acceptRequest(requestId) {
-  // Check if user is verified before allowing acceptance
-  const indicatorElement = document.getElementById('verification-indicator');
-  if (indicatorElement && indicatorElement.textContent !== 'Verified') {
-    showAlert('You must complete identity verification before accepting blood requests.', 'warning');
+/**
+ * Accept a blood request - fully featured handler
+ * Checks KYC verification and opens confirmation modal
+ * Supports multiple call patterns:
+ *   - onclick="acceptRequest(this, ${request.id})" (preferred)
+ *   - onclick="acceptRequest(event, ${request.id})"
+ *   - onclick="acceptRequest(${request.id})"
+ * 
+ * @param {HTMLElement|Event|number} firstArg - Button element, event, or request ID
+ * @param {number} requestId - Request ID (optional, from second parameter)
+ */
+function acceptRequest(firstArg, requestId) {
+  console.log('Button clicked');
+  
+  // Determine the actual requestId and extract event/button info
+  let actualRequestId = requestId;
+  
+  // If only one argument and it's a number, treat it as requestId
+  if (arguments.length === 1 && typeof firstArg === 'number') {
+    actualRequestId = firstArg;
+  }
+  // If firstArg has a data-request-id attribute, use that
+  else if (firstArg && firstArg.getAttribute && firstArg.getAttribute('data-request-id')) {
+    actualRequestId = firstArg.getAttribute('data-request-id');
+  }
+  // If firstArg is an HTMLElement with dataset, use that
+  else if (firstArg && firstArg.dataset && firstArg.dataset.requestId) {
+    actualRequestId = firstArg.dataset.requestId;
+  }
+  
+  if (!actualRequestId) {
+    console.error('❌ Request ID is missing');
+    showErrorNotification('Error: Request ID not found');
     return;
   }
   
-  const modal = document.getElementById('confirmModal');
-  if (modal) {
-    modal.dataset.requestId = requestId;
-    openModal('confirmModal');
+  console.log('Request ID:', actualRequestId);
+  
+  // Stop event propagation if applicable
+  if (firstArg && typeof firstArg === 'object' && firstArg.stopPropagation) {
+    firstArg.stopPropagation();
+  }
+  
+  // Check if donor is KYC verified
+  fetch('/api/profile', {
+    credentials: 'include'
+  })
+  .then(response => response.json())
+  .then(profile => {
+    console.log('🔍 KYC Status:', profile.kyc_verified ? 'Verified' : 'Not Verified');
+    
+    if (!profile.kyc_verified) {
+      if (profile.kyc_pending) {
+        console.log('⏳ KYC pending approval');
+        showErrorNotification('Your KYC verification is still pending. Please wait for admin approval.');
+      } else {
+        console.log('📋 KYC not completed');
+        showErrorNotification('KYC verification required. Please complete verification to accept requests.');
+        setTimeout(() => {
+          startKYCVerification();
+        }, 2000);
+      }
+      return;
+    }
+    
+    // If verified, proceed with acceptance - open confirmation modal
+    const modal = document.getElementById('confirmModal');
+    if (modal) {
+      modal.dataset.requestId = actualRequestId;
+      openModal('confirmModal');
+      console.log('✅ Confirmation modal opened for request:', actualRequestId);
+    } else {
+      console.error('❌ Confirmation modal not found');
+      showErrorNotification('Unable to open confirmation dialog');
+    }
+  })
+  .catch(error => {
+    console.error('❌ Error checking verification status:', error);
+    showErrorNotification('Unable to verify your status. Please try again.');
+  });
+}
+
+/**
+ * Confirm request acceptance - sends to backend
+ * This function is DEPRECATED - use completeAcceptance() in pages instead
+ * Kept for backward compatibility
+ */
+function confirmAcceptance() {
+  console.log('⚠️  confirmAcceptance() called (deprecated)');
+  console.log('Use completeAcceptance() in the page instead');
+  
+  const requestId = document.getElementById('confirmModal')?.dataset.requestId;
+  
+  if (!requestId) {
+    console.error('❌ Request ID not found');
+    showErrorNotification('Error: Request ID not found');
+    return;
+  }
+
+  console.log('Request ID:', requestId);
+  
+  // Call the page's completeAcceptance function if it exists
+  if (typeof completeAcceptance === 'function') {
+    console.log('Calling completeAcceptance() from page...');
+    completeAcceptance();
+  } else {
+    console.error('❌ completeAcceptance() not found in page scope');
+    showErrorNotification('Error: Acceptance function not available');
   }
 }
 
-function confirmAcceptance() {
+/**
+ * Default implementation of completeAcceptance
+ * Individual pages can override this
+ */
+function completeAcceptance() {
+  console.log('📋 Default completeAcceptance() called');
+  
   const requestId = document.getElementById('confirmModal')?.dataset.requestId;
-  if (requestId) {
-    closeModal('confirmModal');
-    showSuccessNotification('Request accepted! You will be contacted soon with donation details.');
-    
-    // Simulate API call
-    setTimeout(() => {
-      const card = document.querySelector(`[data-request-id="${requestId}"]`);
-      if (card) {
-        const badge = card.querySelector('.request-badge');
-        if (badge) {
-          badge.textContent = 'Accepted';
-          badge.className = 'request-badge badge-success';
-        }
-      }
-    }, 500);
+  
+  if (!requestId) {
+    console.error('❌ Request ID not found');
+    showErrorNotification('Error processing request');
+    return;
   }
+
+  console.log('✅ Accepting request ID:', requestId);
+  
+  // Show loading state
+  const confirmBtn = document.querySelector('[onclick*="completeAcceptance"]') || 
+                    document.querySelector('.confirm-btn') ||
+                    document.querySelector('[data-action="confirm"]');
+  
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '⏳ Processing...';
+  }
+  
+  // Send request to backend
+  fetch(`/api/requests/${requestId}/respond`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    credentials: 'include',
+    body: JSON.stringify({ action: 'accept' })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log('📦 Response:', data);
+    
+    if (data.success) {
+      console.log('✅ Request accepted successfully!');
+      showSuccessNotification('Request accepted! Please wait for hospital confirmation.');
+      
+      // Close modal and reset
+      closeModal('confirmModal');
+      setTimeout(() => {
+        // Reload requests
+        if (typeof loadRequests === 'function') {
+          loadRequests();
+        }
+      }, 1000);
+    } else {
+      console.error('❌ Error:', data.message);
+      showErrorNotification(data.message || 'Failed to accept request');
+    }
+  })
+  .catch(error => {
+    console.error('❌ Network error:', error);
+    showErrorNotification('Network error. Please check your connection.');
+  })
+  .finally(() => {
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Confirm';
+    }
+  });
 }
 
 // ========================================
@@ -571,6 +821,7 @@ function displayRequests(requests) {
 function createRequestCard(request) {
   const card = document.createElement('div');
   card.className = `request-card ${request.urgency}`;
+  card.setAttribute('data-request-id', request.id);
   card.innerHTML = `
     <div class="request-header">
       <div class="blood-type-badge">${request.blood_type}</div>
@@ -582,9 +833,21 @@ function createRequestCard(request) {
       <p class="units">${request.units_needed} units needed</p>
     </div>
     <div class="request-actions">
-      <button class="btn btn-primary" onclick="acceptRequest(${request.id})">Accept Request</button>
+      <button class="btn btn-primary accept-request-btn" type="button" data-request-id="${request.id}">Accept Request</button>
     </div>
   `;
+  
+  // Attach click listener to button with proper event handling
+  const button = card.querySelector('.accept-request-btn');
+  if (button) {
+    button.addEventListener('click', function(event) {
+      event.stopPropagation();
+      const reqId = this.getAttribute('data-request-id');
+      console.log('🔘 Accept button clicked for request:', reqId);
+      acceptRequest(this, reqId);
+    });
+  }
+  
   return card;
 }
 
@@ -622,8 +885,28 @@ function displayMockRequests() {
   displayRequests(mockRequests);
 }
 
-function openWallet() {
-  window.location.href = 'wallet.html';
+/**
+ * Open wallet with balance check
+ * If wallet is locked (balance = 0), show popup instead of redirecting
+ * If wallet is unlocked (balance > 0), allow access to wallet
+ */
+async function openWallet() {
+  console.log('Opening wallet...');
+  try {
+    const balance = await getWalletBalance();
+    
+    if (balance === 0) {
+      console.log('🔒 Wallet locked: access denied');
+      showWalletLockPopup();
+      return false;
+    }
+    
+    console.log('✅ Wallet unlocked: access granted (balance: ' + balance + ')');
+    window.location.href = 'wallet.html';
+  } catch (error) {
+    console.error('❌ Error opening wallet:', error);
+    showErrorNotification('Unable to access wallet');
+  }
 }
 
 function openQRScanner() {
@@ -1046,6 +1329,8 @@ function setupFormHandlers() {
   if (donorSignupForm) {
     donorSignupForm.addEventListener('submit', handleDonorSignup);
     console.log('✅ Donor signup form handler attached');
+  } else {
+    console.warn('⚠️ Donor signup form NOT found');
   }
   
   // Hospital signup form
@@ -1053,6 +1338,8 @@ function setupFormHandlers() {
   if (hospitalSignupForm) {
     hospitalSignupForm.addEventListener('submit', handleHospitalSignup);
     console.log('✅ Hospital signup form handler attached');
+  } else {
+    console.warn('⚠️ Hospital signup form NOT found');
   }
   
   // Donor login form
@@ -1060,6 +1347,8 @@ function setupFormHandlers() {
   if (donorLoginForm) {
     donorLoginForm.addEventListener('submit', handleDonorLogin);
     console.log('✅ Donor login form handler attached');
+  } else {
+    console.warn('⚠️ Donor login form NOT found');
   }
   
   // Hospital login form
@@ -1068,7 +1357,7 @@ function setupFormHandlers() {
     hospitalLoginForm.addEventListener('submit', handleHospitalLogin);
     console.log('✅ Hospital login form handler attached');
   } else {
-    console.warn('⚠️ Hospital login form NOT found in DOM');
+    console.warn('⚠️ Hospital login form NOT found');
   }
   
   // Verification form
@@ -1076,20 +1365,29 @@ function setupFormHandlers() {
   if (verificationForm) {
     verificationForm.addEventListener('submit', handleVerification);
     console.log('✅ Verification form handler attached');
+  } else {
+    console.warn('⚠️ Verification form NOT found');
   }
   
   // Hospital KYC form
   const hospitalKycForm = document.getElementById('hospital-kyc-form');
   if (hospitalKycForm) {
-    hospitalKycForm.addEventListener('submit', handleHospitalKyc);
+    // Note: This form uses onsubmit attribute in HTML, but we attach here as backup
+    if (!hospitalKycForm.onsubmit) {
+      hospitalKycForm.addEventListener('submit', handleHospitalKyc);
+    }
     console.log('✅ Hospital KYC form handler attached');
+  } else {
+    console.warn('⚠️ Hospital KYC form NOT found');
   }
   
   // OTP verification form
   const otpForm = document.getElementById('otp-form');
   if (otpForm) {
     otpForm.addEventListener('submit', handleOtpVerification);
-    console.log('✅ OTP form handler attached');
+    console.log('✅ OTP verification form handler attached');
+  } else {
+    console.warn('⚠️ OTP verification form NOT found');
   }
   
   // Post blood request form
@@ -1097,6 +1395,8 @@ function setupFormHandlers() {
   if (requestForm) {
     requestForm.addEventListener('submit', handlePostRequest);
     console.log('✅ Post request form handler attached');
+  } else {
+    console.warn('⚠️ Post request form NOT found');
   }
   
   // Profile form
@@ -1104,7 +1404,11 @@ function setupFormHandlers() {
   if (profileForm) {
     profileForm.addEventListener('submit', handleProfileUpdate);
     console.log('✅ Profile form handler attached');
+  } else {
+    console.warn('⚠️ Profile form NOT found');
   }
+  
+  console.log('✓ Form handler setup complete');
 }
 
 function handleDonorSignup(e) {
@@ -1257,10 +1561,13 @@ async function handleHospitalSignup(e) {
 
 async function handleDonorLogin(e) {
   e.preventDefault();
+  console.log('🔴 Donor login form submitted');
   
   const identifier = (document.getElementById('login-identifier')?.value || '').trim();
   const password = document.getElementById('password')?.value;
   const submitBtn = e.target.querySelector('button[type="submit"]');
+  
+  console.log('📝 Form data:', { identifier, passwordLength: password?.length });
   
   if (!identifier || !password) {
     showErrorNotification('Please fill in all fields');
@@ -1273,6 +1580,7 @@ async function handleDonorLogin(e) {
       submitBtn.textContent = 'Logging in...';
     }
 
+    console.log('📤 Sending login request to /api/login/donor');
     const response = await fetch('/api/login/donor', {
       method: 'POST',
       headers: {
@@ -1283,17 +1591,20 @@ async function handleDonorLogin(e) {
     });
     
     const result = await response.json();
+    console.log('📥 Login response received:', { ok: response.ok, success: result.success, status: response.status });
     
     if (response.ok && result.success) {
+      console.log('✅ Login successful, redirecting to:', result.redirect || '/donor-dashboard');
       showSuccessNotification('Login successful');
       setTimeout(() => {
         window.location.href = result.redirect || '/donor-dashboard';
       }, 1000);
     } else {
+      console.log('❌ Login failed:', result.message);
       showErrorNotification(result.message || 'Login failed');
     }
   } catch (error) {
-    console.error('Error logging in:', error);
+    console.error('❌ Login error:', error);
     showErrorNotification('Login failed. Please try again.');
   } finally {
     if (submitBtn) {
@@ -1506,6 +1817,25 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Setup form handlers
   setupFormHandlers();
+  
+  // ========================================
+  // ADD GLOBAL CLICK LOGGING FOR ALL BUTTONS
+  // ========================================
+  document.addEventListener('click', function(e) {
+    const target = e.target;
+    // Log clicks on buttons, links with onclick, and elements with data attributes
+    if (target.tagName === 'BUTTON' || target.onclick || target.dataset.action || 
+        (target.tagName === 'A' && target.href && !target.href.startsWith('http'))) {
+      console.log('🖱️ CLICK EVENT:', {
+        element: target.tagName,
+        id: target.id,
+        class: target.className,
+        text: target.textContent?.substring(0, 50),
+        onclick: target.onclick ? 'Yes' : 'No',
+        dataset: { ...target.dataset }
+      });
+    }
+  }, true); // Use capture phase to catch all events
   
   // Setup OTP input
   setupOtpInput();
@@ -1728,6 +2058,7 @@ async function handleDonorSignup(e) {
 
     if (data.success) {
       currentPhone = userData.phone;
+      currentEmail = userData.email;  // Store email for OTP verification
       currentRole = 'donor';
       
       showAuthAlert(alertDiv, `✅ ${data.message}`, 'success');
@@ -1805,6 +2136,7 @@ async function handleHospitalSignup(e) {
 
     if (data.success) {
       currentPhone = userData.phone;
+      currentEmail = userData.email;  // Store email for OTP verification
       currentRole = 'hospital';
       
       showAuthAlert(alertDiv, `✅ ${data.message}`, 'success');
@@ -1886,7 +2218,7 @@ async function handleOtpVerification(e) {
       },
       credentials: 'include',
       body: JSON.stringify({
-        phone: currentPhone,
+        email: currentEmail || currentPhone,  // Send EMAIL, fallback to phone for safety
         otp: otp
       })
     });
@@ -2214,72 +2546,88 @@ async function getWalletBalance() {
 }
 
 /**
- * Check if wallet is locked (balance = 0)
- * Adds visual overlay to disable donation features
+ * Update the wallet balance display only (no lock logic)
+ * Called on page load to show current balance in header
+ */
+async function updateWalletDisplay() {
+  try {
+    const balance = await getWalletBalance();
+    const walletStatus = document.getElementById('wallet-balance');
+    
+    if (walletStatus) {
+      walletStatus.textContent = `Balance: ${balance} points`;
+      console.log('Wallet status:', balance);
+    }
+  } catch (error) {
+    console.error('❌ Error updating wallet display:', error);
+  }
+}
+
+/**
+ * Show wallet locked popup when user tries to access wallet
+ * This is NOT a full-page overlay - just a dismissible modal
+ */
+function showWalletLockPopup() {
+  // Create modal if it doesn't exist
+  let popup = document.getElementById('wallet-lock-popup');
+  
+  if (!popup) {
+    popup = document.createElement('div');
+    popup.id = 'wallet-lock-popup';
+    popup.className = 'wallet-lock-modal';
+    popup.innerHTML = `
+      <div class="wallet-lock-backdrop"></div>
+      <div class="wallet-lock-content">
+        <button class="wallet-lock-close" onclick="closeWalletLockPopup()">×</button>
+        <div class="wallet-lock-icon">🔒</div>
+        <h3>Wallet Locked</h3>
+        <p>Complete a blood donation at a hospital to unlock your wallet and access rewards.</p>
+        <p class="wallet-lock-hint">Step 1: Find a nearby hospital</p>
+        <p class="wallet-lock-hint">Step 2: Donate blood via QR scan</p>
+        <p class="wallet-lock-hint">Step 3: Your wallet unlocks instantly!</p>
+        <button class="btn btn-primary" onclick="closeWalletLockPopup()">Got it</button>
+      </div>
+    `;
+    document.body.appendChild(popup);
+  }
+  
+  popup.classList.add('active');
+  console.log('Wallet locked: access denied');
+}
+
+/**
+ * Close the wallet locked popup
+ */
+function closeWalletLockPopup() {
+  const popup = document.getElementById('wallet-lock-popup');
+  if (popup) {
+    popup.classList.remove('active');
+  }
+}
+
+/**
+ * Legacy function for backwards compatibility
+ * No longer blocks UI - now just updates balance display
  */
 async function checkWalletLock() {
   console.log('🔒 Checking wallet lock status...');
-  const balance = await getWalletBalance();
-  const walletStatus = document.getElementById('wallet-balance');
-  
-  if (walletStatus) {
-    walletStatus.textContent = `Balance: ${balance} points`;
-  }
-  
-  // If balance is 0, apply overlay
-  if (balance === 0) {
-    console.log('🔒 Wallet is locked (balance = 0)');
-    applyWalletLock();
-  } else {
-    console.log('✅ Wallet is unlocked (balance = ' + balance + ')');
-    removeWalletLock();
-  }
+  await updateWalletDisplay();
 }
 
 /**
- * Apply visual lock to wallet - disable donation features
+ * Legacy function for backwards compatibility (no longer used)
  */
 function applyWalletLock() {
-  // Check if overlay already exists
-  let overlay = document.getElementById('wallet-lock-overlay');
-  
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'wallet-lock-overlay';
-    overlay.className = 'wallet-overlay active';
-    overlay.innerHTML = `
-      <div class="wallet-lock-message">
-        <div class="lock-icon">🔒</div>
-        <h3>Wallet Locked</h3>
-        <p>Donate blood to unlock wallet features</p>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-  } else {
-    overlay.classList.add('active');
-  }
-  
-  // Apply blur to donation-related elements
-  const donationElements = document.querySelectorAll('[data-donation], .donation-area, .request-details');
-  donationElements.forEach(el => {
-    el.classList.add('wallet-locked');
-  });
+  // Legacy - now handled by showWalletLockPopup() instead
+  console.log('⚠️ applyWalletLock() is deprecated - use showWalletLockPopup()');
 }
 
 /**
- * Remove wallet lock overlay - enable donation features
+ * Legacy function for backwards compatibility (no longer used)
  */
 function removeWalletLock() {
-  const overlay = document.getElementById('wallet-lock-overlay');
-  if (overlay) {
-    overlay.classList.remove('active');
-  }
-  
-  // Remove blur from donation elements
-  const donationElements = document.querySelectorAll('[data-donation], .donation-area, .request-details');
-  donationElements.forEach(el => {
-    el.classList.remove('wallet-locked');
-  });
+  // Legacy - wallet is automatically unlocked after donation
+  console.log('⚠️ removeWalletLock() is deprecated');
 }
 
 /**

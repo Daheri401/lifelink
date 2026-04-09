@@ -506,73 +506,99 @@
       window.location.href = `request-details.html?id=${id}`;
     }
 
-    function acceptRequest(event, id) {
-      event.stopPropagation();
+    // acceptRequest function is now defined globally in script.js
+    // The global version handles KYC verification and modal opening
+    // This avoids conflicts between local and global function definitions
+
+    function completeAcceptance() {
+      console.log('Confirm clicked');
+      const checkbox = document.getElementById('confirm-check');
+      const requestId = document.getElementById('confirmModal').dataset.requestId;
       
-      // Check if donor is KYC verified
-      fetch('/api/profile', {
-        credentials: 'include'
+      console.log('Checkbox checked:', checkbox ? checkbox.checked : 'N/A');
+      console.log('Request ID:', requestId);
+      
+      if (!checkbox || !checkbox.checked) {
+        console.error('Checkbox not checked');
+        showErrorNotification('Please confirm you are ready to donate');
+        return;
+      }
+      
+      if (!requestId) {
+        console.error('Request ID missing');
+        showErrorNotification('Error: Request ID not found');
+        return;
+      }
+      
+      console.log('Sending accept request for:', requestId);
+      
+      // Disable button during submission
+      const confirmBtn = event && event.target;
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Processing...';
+      }
+      
+      fetch(`/api/requests/${requestId}/respond`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'accept' })
       })
-      .then(response => response.json())
-      .then(profile => {
-        if (!profile.kyc_verified) {
-          if (profile.kyc_pending) {
-            showErrorNotification('Your KYC verification is still pending. Please wait for admin approval.');
-          } else {
-            showErrorNotification('KYC verification required. Please complete verification to accept requests.');
-            setTimeout(() => {
-              startKYCVerification();
-            }, 2000);
-          }
-          return;
-        }
+      .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
         
-        // If verified, proceed with acceptance
-        document.getElementById('confirmModal').dataset.requestId = id;
-        openModal('confirmModal');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Server data:', data);
+        
+        if (data.success) {
+          console.log('✅ Request accepted successfully');
+          showSuccessNotification('Request accepted! Hospital will contact you shortly.');
+          closeModal('confirmModal');
+          
+          // Refresh requests after a short delay
+          setTimeout(() => {
+            loadRequests();
+          }, 1500);
+        } else {
+          console.error('❌ Server returned success: false');
+          showErrorNotification('Error: ' + (data.message || 'Unknown error'));
+        }
       })
       .catch(error => {
-        console.error('Error checking verification status:', error);
-        showErrorNotification('Unable to verify your status. Please try again.');
+        console.error('❌ Error accepting request:', error);
+        console.error('Error details:', error.message);
+        showErrorNotification('Failed to accept request. Please try again.');
+      })
+      .finally(() => {
+        // Re-enable button
+        if (confirmBtn) {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = 'Confirm & Accept';
+        }
       });
     }
 
-    function completeAcceptance() {
-      const checkbox = document.getElementById('confirm-check');
-      if (checkbox.checked) {
-        const requestId = document.getElementById('confirmModal').dataset.requestId;
-        
-        fetch(`/api/requests/${requestId}/respond`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({ action: 'accept' })
-        })
-        .then(response => {
-          if (response.ok) {
-            showSuccessNotification('Request accepted! Hospital will contact you shortly.');
-            closeModal('confirmModal');
-            setTimeout(() => {
-              loadRequests(); // Refresh requests
-            }, 1500);
-          } else {
-            throw new Error('Failed to accept request');
-          }
-        })
-        .catch(error => {
-          console.error('Error accepting request:', error);
-          showErrorNotification('Failed to accept request. Please try again.');
-        });
-      } else {
-        showErrorNotification('Please confirm you are ready to donate');
-      }
-    }
-
     // Wallet functionality
-    function openWallet() {
-      // Redirect to wallet page or open modal
+    async function openWallet() {
+      console.log('Opening wallet...');
+      const balance = await getWalletBalance();
+      
+      if (balance === 0) {
+        console.log('🔒 Wallet locked: access denied');
+        showWalletLockPopup();
+        return false;
+      }
+      
+      console.log('✅ Wallet unlocked: access granted (balance: ' + balance + ')');
       window.location.href = 'wallet.html';
     }
 
@@ -732,7 +758,9 @@
     document.addEventListener('DOMContentLoaded', function() {
       loadProfile();
       loadStats();
-      checkWalletLock(); // Check wallet lock status for QR system
+      updateWalletDisplay(); // Show wallet balance in header (but don't lock)
+      loadRequests(); // Load blood requests on page load
+      console.log('Dashboard initialized - requests loaded');
     });
   </script>
 </body>

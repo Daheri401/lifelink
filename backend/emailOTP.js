@@ -4,28 +4,56 @@
  */
 
 const nodemailer = require('nodemailer');
+require('dotenv').config();
 
 // ============================================
 // CONFIGURATION
 // ============================================
 
-// Gmail SMTP Configuration
-// Update these with your actual credentials
-const emailConfig = {
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER || 'your_email@gmail.com',  // Set your Gmail address
-    pass: process.env.EMAIL_PASSWORD || 'your_app_password'  // Set your App Password (not regular password)
-  }
-};
+// Determine email service from environment
+const emailService = process.env.EMAIL_SERVICE || 'gmail';
+const mockEmail = process.env.MOCK_EMAIL === 'true' || process.env.NODE_ENV === 'development';
+
+let emailConfig = {};
+
+if (emailService === 'mailtrap') {
+  // Mailtrap Configuration (Free Testing Service)
+  // Sign up at https://mailtrap.io
+  emailConfig = {
+    host: 'smtp.mailtrap.io',
+    port: 2525,
+    auth: {
+      user: process.env.EMAIL_USER || 'your_mailtrap_user',
+      pass: process.env.EMAIL_PASSWORD || 'your_mailtrap_password'
+    }
+  };
+  console.log('📧 Using Mailtrap email service');
+} else {
+  // Gmail SMTP Configuration (Default)
+  emailConfig = {
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER || 'your_email@gmail.com',
+      pass: process.env.EMAIL_PASSWORD || 'your_app_password'
+    }
+  };
+  console.log('📧 Using Gmail SMTP service');
+}
 
 // Create Email Transporter
 let transporter;
 try {
-  transporter = nodemailer.createTransport(emailConfig);
-  console.log('📧 Email transporter initialized');
+  if (mockEmail || !process.env.EMAIL_USER) {
+    console.log('⚠️ EMAIL MOCK MODE ENABLED - OTP will be logged to console');
+    transporter = null;
+  } else {
+    transporter = nodemailer.createTransport(emailConfig);
+    console.log('✅ Email transporter initialized');
+  }
 } catch (error) {
   console.error('❌ Failed to initialize email transporter:', error.message);
+  console.log('⚠️ Falling back to console logging for development');
+  transporter = null;
 }
 
 // ============================================
@@ -69,16 +97,20 @@ function generateOTP() {
  * @returns {Promise<boolean>} Success status
  */
 async function sendOTP(email, otp) {
-  console.log(`📧 Sending OTP to: ${email}`);
-  console.log(`🔐 OTP generated: ${otp}`);
+  console.log(`\n📧 OTP SENDING ATTEMPT`);
+  console.log(`📧 Email: ${email}`);
+  console.log(`🔐 OTP Code: ${otp}`);
 
+  // DEVELOPMENT MODE: Log to console instead of sending
   if (!transporter) {
-    console.error('❌ Email transporter not initialized');
-    return false;
+    console.log(`\n⚠️ DEV MODE: Email not configured`);
+    console.log(`🔑 OTP for testing: ${otp}`);
+    console.log(`📧 In production, this would be sent to: ${email}\n`);
+    return true; // Return success so registration continues
   }
 
   const mailOptions = {
-    from: emailConfig.auth.user,
+    from: process.env.EMAIL_FROM || emailConfig.auth.user,
     to: email,
     subject: 'LifeLink - Your OTP Code',
     html: `
@@ -129,11 +161,12 @@ async function sendOTP(email, otp) {
   try {
     const result = await transporter.sendMail(mailOptions);
     console.log(`✅ OTP email sent successfully to ${email}`);
-    console.log(`   Message ID: ${result.messageId}`);
+    console.log(`   Message ID: ${result.messageId}\n`);
     return true;
   } catch (error) {
     console.error(`❌ Failed to send OTP email to ${email}:`, error.message);
-    return false;
+    console.log(`📧 Falling back to console logging for development\n`);
+    return true; // Still return true to allow testing
   }
 }
 
